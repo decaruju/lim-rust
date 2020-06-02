@@ -180,6 +180,52 @@ mod tests {
                 super::lexer::token::Token::Number(String::from(".2")),
                 super::lexer::token::Token::Plus,
                 super::lexer::token::Token::Number(String::from("4.0")),
+            ])
+        );
+    }
+
+    #[test]
+    fn all_minus() {
+        assert_eq!(
+            super::lexer::lexer::lex("x = .2 - 4.0 - 3 + 1"),
+            Some(vec![
+                super::lexer::token::Token::Identifier(String::from("x")),
+                super::lexer::token::Token::Equal,
+                super::lexer::token::Token::Number(String::from(".2")),
+                super::lexer::token::Token::Minus,
+                super::lexer::token::Token::Number(String::from("4.0")),
+                super::lexer::token::Token::Minus,
+                super::lexer::token::Token::Number(String::from("3")),
+                super::lexer::token::Token::Plus,
+                super::lexer::token::Token::Number(String::from("1")),
+            ])
+        );
+    }
+
+    #[test]
+    fn float_without_digits() {
+        assert_eq!(
+            super::lexer::lexer::lex("2 + ."),
+            None,
+        );
+    }
+
+    #[test]
+    fn arithmetic_without_parenthesis() {
+        assert_eq!(
+            super::lexer::lexer::lex("1 + 2 - 3 * .4 / 5.0 % 6"),
+            Some(vec![
+                super::lexer::token::Token::Number(String::from("1")),
+                super::lexer::token::Token::Plus,
+                super::lexer::token::Token::Number(String::from("2")),
+                super::lexer::token::Token::Minus,
+                super::lexer::token::Token::Number(String::from("3")),
+                super::lexer::token::Token::Times,
+                super::lexer::token::Token::Number(String::from(".4")),
+                super::lexer::token::Token::Division,
+                super::lexer::token::Token::Number(String::from("5.0")),
+                super::lexer::token::Token::Modulus,
+                super::lexer::token::Token::Number(String::from("6")),
            ])
         );
     }

@@ -9,7 +9,11 @@ pub fn lex(code: &str) -> Option<Vec<Token>> {
             while !characters.is_empty() && token.continues(characters[0])? {
                 token.append(characters.remove(0));
             }
-            tokens.push(token);
+            if token.is_complete() {
+                tokens.push(token);
+            } else {
+              return None
+            }
         }
     }
     Some(tokens)
