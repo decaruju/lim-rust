@@ -26,6 +26,10 @@ impl Token {
             Some(Token::Division)
         } else if character == '%' {
             Some(Token::Modulus)
+        } else if character == '(' {
+            Some(Token::OpenParenthesis)
+        } else if character == ')' {
+            Some(Token::CloseParenthesis)
         } else if character.is_digit(10) || character == '.' {
             Some(Token::Number(character.to_string()))
         } else if character.is_alphabetic() || character == '_' {

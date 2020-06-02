@@ -242,6 +242,32 @@ mod tests {
                 super::lexer::token::Token::Plus,
                 super::lexer::token::Token::Number(String::from("1")),
                 super::lexer::token::Token::CloseParenthesis,
+            ])
+        );
+    }
+
+    #[test]
+    fn arithmetic_with_multiple_parenthesis() {
+        assert_eq!(
+            super::lexer::lexer::lex("1 + (1 + (1 + 1)) + (1 + 1)"),
+            Some(vec![
+                super::lexer::token::Token::Number(String::from("1")),
+                super::lexer::token::Token::Plus,
+                super::lexer::token::Token::OpenParenthesis,
+                super::lexer::token::Token::Number(String::from("1")),
+                super::lexer::token::Token::Plus,
+                super::lexer::token::Token::OpenParenthesis,
+                super::lexer::token::Token::Number(String::from("1")),
+                super::lexer::token::Token::Plus,
+                super::lexer::token::Token::Number(String::from("1")),
+                super::lexer::token::Token::CloseParenthesis,
+                super::lexer::token::Token::CloseParenthesis,
+                super::lexer::token::Token::Plus,
+                super::lexer::token::Token::OpenParenthesis,
+                super::lexer::token::Token::Number(String::from("1")),
+                super::lexer::token::Token::Plus,
+                super::lexer::token::Token::Number(String::from("1")),
+                super::lexer::token::Token::CloseParenthesis,
            ])
         );
     }
