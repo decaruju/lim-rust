@@ -226,6 +226,22 @@ mod tests {
                 super::lexer::token::Token::Number(String::from("5.0")),
                 super::lexer::token::Token::Modulus,
                 super::lexer::token::Token::Number(String::from("6")),
+            ])
+        );
+    }
+
+    #[test]
+    fn arithmetic_with_single_parenthesis() {
+        assert_eq!(
+            super::lexer::lexer::lex("1 + (1 + 1)"),
+            Some(vec![
+                super::lexer::token::Token::Number(String::from("1")),
+                super::lexer::token::Token::Plus,
+                super::lexer::token::Token::OpenParenthesis,
+                super::lexer::token::Token::Number(String::from("1")),
+                super::lexer::token::Token::Plus,
+                super::lexer::token::Token::Number(String::from("1")),
+                super::lexer::token::Token::CloseParenthesis,
            ])
         );
     }

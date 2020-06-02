@@ -8,6 +8,8 @@ pub enum Token {
     Times,
     Division,
     Modulus,
+    OpenParenthesis,
+    CloseParenthesis,
 }
 
 impl Token {
