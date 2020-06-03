@@ -2,12 +2,16 @@
 pub enum Token {
     Identifier(String),
     Number(String),
+    Literal(String, char),
     Equal,
     Plus,
     Minus,
     Times,
     Division,
     Modulus,
+    Comma,
+    SemiColon,
+    NewLine,
     OpenParenthesis,
     CloseParenthesis,
 }
@@ -26,10 +30,18 @@ impl Token {
             Some(Token::Division)
         } else if character == '%' {
             Some(Token::Modulus)
+        } else if character == ',' {
+            Some(Token::Comma)
+        } else if character == ';' {
+            Some(Token::SemiColon)
+        } else if character == '\n' {
+            Some(Token::NewLine)
         } else if character == '(' {
             Some(Token::OpenParenthesis)
         } else if character == ')' {
             Some(Token::CloseParenthesis)
+        } else if character == '"' || character == '\'' {
+            Some(Token::Literal(character.to_string(), character))
         } else if character.is_digit(10) || character == '.' {
             Some(Token::Number(character.to_string()))
         } else if character.is_alphabetic() || character == '_' {
@@ -41,7 +53,16 @@ impl Token {
 
     pub fn continues(&self, character: char) -> Option<bool> {
         match self {
-            Token::Identifier(_) => Some(character.is_alphabetic() || character.is_digit(10) || character == '_'),
+            Token::Identifier(_) => {
+                Some(character.is_alphabetic() || character.is_digit(10) || character == '_')
+            }
+            Token::Literal(string, delimiter) => {
+                let escaped_delimiter = format!("\\{}", delimiter);
+                Some(
+                    string.matches(*delimiter).count() - string.matches(&escaped_delimiter).count()
+                        != 2,
+                )
+            }
             Token::Number(string) => {
                 if character.is_digit(10) {
                     Some(true)
@@ -63,16 +84,31 @@ impl Token {
         match self {
             Token::Identifier(string) => string.push(character),
             Token::Number(string) => string.push(character),
+            Token::Literal(string, _) => string.push(character),
             _ => unreachable!(),
         }
     }
 
     pub fn is_complete(&self) -> bool {
         match self {
-            Token::Number(string) => {
-                string.len() > 1 || string.chars().next().unwrap() != '.'
+            Token::Number(string) => string.len() > 1 || string.chars().next().unwrap() != '.',
+            Token::Literal(string, delimiter) => {
+                let escaped_delimiter = format!("\\{}", delimiter);
+                string.matches(*delimiter).count() - string.matches(&escaped_delimiter).count() == 2
             }
-            _ => true
+            _ => true,
+        }
+    }
+
+    pub fn clean(&mut self) {
+        match self {
+            Token::Literal(string, delimiter) => {
+                string.remove(0);
+                string.remove(string.len() - 1);
+                let escaped_delimiter = format!("\\{}", delimiter);
+                *string = string.replace(&escaped_delimiter, &delimiter.to_string());
+            }
+            _ => {}
         }
     }
 }

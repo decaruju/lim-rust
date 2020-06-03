@@ -10,9 +10,10 @@ pub fn lex(code: &str) -> Option<Vec<Token>> {
                 token.append(characters.remove(0));
             }
             if token.is_complete() {
+                token.clean();
                 tokens.push(token);
             } else {
-              return None
+                return None;
             }
         }
     }
