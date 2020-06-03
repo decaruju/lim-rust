@@ -418,4 +418,26 @@ mod tests {
             ),])
         );
     }
+
+    #[test]
+    fn everything_up_until_now() {
+        assert_eq!(
+            super::lexer::lexer::lex("foo_bAr = 2 + (1-'f\\\'o\\\'o\') * foobar()"),
+            Some(vec![
+                super::lexer::token::Token::Identifier(String::from("foo_bAr")),
+                super::lexer::token::Token::Equal,
+                super::lexer::token::Token::Number(String::from("2")),
+                super::lexer::token::Token::Plus,
+                super::lexer::token::Token::OpenParenthesis,
+                super::lexer::token::Token::Number(String::from("1")),
+                super::lexer::token::Token::Minus,
+                super::lexer::token::Token::Literal(String::from("f'o'o"), '\''),
+                super::lexer::token::Token::CloseParenthesis,
+                super::lexer::token::Token::Times,
+                super::lexer::token::Token::Identifier(String::from("foobar")),
+                super::lexer::token::Token::OpenParenthesis,
+                super::lexer::token::Token::CloseParenthesis,
+            ])
+        );
+    }
 }
