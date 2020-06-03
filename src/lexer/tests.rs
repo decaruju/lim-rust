@@ -422,7 +422,7 @@ mod tests {
     #[test]
     fn everything_up_until_now() {
         assert_eq!(
-            super::lexer::lexer::lex("foo_bAr = 2 + (1-'f\\\'o\\\'o\') * foobar()"),
+            super::lexer::lexer::lex("foo_bAr = 2 + (1-'f\\\'o\\\'o\') * foobar(); x = 4.0"),
             Some(vec![
                 super::lexer::token::Token::Identifier(String::from("foo_bAr")),
                 super::lexer::token::Token::Equal,
@@ -437,6 +437,10 @@ mod tests {
                 super::lexer::token::Token::Identifier(String::from("foobar")),
                 super::lexer::token::Token::OpenParenthesis,
                 super::lexer::token::Token::CloseParenthesis,
+                super::lexer::token::Token::SemiColon,
+                super::lexer::token::Token::Identifier(String::from("x")),
+                super::lexer::token::Token::Equal,
+                super::lexer::token::Token::Number(String::from("4.0")),
             ])
         );
     }
