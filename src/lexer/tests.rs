@@ -1,3 +1,4 @@
+#[allow(unused_imports)]
 use crate::lexer;
 
 #[cfg(test)]
@@ -201,7 +202,11 @@ mod tests {
 
     #[test]
     fn float_without_digits() {
-        assert_eq!(super::lexer::lexer::lex("2 + ."), None,);
+        assert_eq!(super::lexer::lexer::lex("2 + ."), Some(vec![
+            super::lexer::token::Token::Number(String::from("2")),
+            super::lexer::token::Token::Plus,
+            super::lexer::token::Token::Period,
+        ]));
     }
 
     #[test]
@@ -416,6 +421,18 @@ mod tests {
                 String::from("f\"o\"o"),
                 '"'
             ),])
+        );
+    }
+
+    #[test]
+    fn member_expression() {
+        assert_eq!(
+            super::lexer::lexer::lex("foo.bar"),
+            Some(vec![
+                super::lexer::token::Token::Identifier(String::from("foo")),
+                super::lexer::token::Token::Period,
+                super::lexer::token::Token::Identifier(String::from("bar")),
+            ])
         );
     }
 

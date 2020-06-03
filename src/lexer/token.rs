@@ -1,4 +1,4 @@
-#[derive(Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq)]
 pub enum Token {
     Identifier(String),
     Number(String),
@@ -10,10 +10,15 @@ pub enum Token {
     Division,
     Modulus,
     Comma,
+    Period,
     SemiColon,
     NewLine,
     OpenParenthesis,
     CloseParenthesis,
+    OpenBrace,
+    CloseBrace,
+    OpenBracket,
+    CloseBracket,
 }
 
 impl Token {
@@ -32,6 +37,8 @@ impl Token {
             Some(Token::Modulus)
         } else if character == ',' {
             Some(Token::Comma)
+        } else if character == '.' {
+            Some(Token::Period)
         } else if character == ';' {
             Some(Token::SemiColon)
         } else if character == '\n' {
@@ -40,9 +47,17 @@ impl Token {
             Some(Token::OpenParenthesis)
         } else if character == ')' {
             Some(Token::CloseParenthesis)
+        } else if character == '{' {
+            Some(Token::OpenBrace)
+        } else if character == '}' {
+            Some(Token::CloseBrace)
+        } else if character == '[' {
+            Some(Token::OpenBracket)
+        } else if character == ']' {
+            Some(Token::CloseBracket)
         } else if character == '"' || character == '\'' {
             Some(Token::Literal(character.to_string(), character))
-        } else if character.is_digit(10) || character == '.' {
+        } else if character.is_digit(10) {
             Some(Token::Number(character.to_string()))
         } else if character.is_alphabetic() || character == '_' {
             Some(Token::Identifier(character.to_string()))
@@ -53,6 +68,7 @@ impl Token {
 
     pub fn continues(&self, character: char) -> Option<bool> {
         match self {
+            Token::Period => Some(character.is_digit(10)),
             Token::Identifier(_) => {
                 Some(character.is_alphabetic() || character.is_digit(10) || character == '_')
             }
@@ -85,6 +101,9 @@ impl Token {
             Token::Identifier(string) => string.push(character),
             Token::Number(string) => string.push(character),
             Token::Literal(string, _) => string.push(character),
+            Token::Period => {
+                *self = Token::Number(String::from(format!(".{}", character)));
+            }
             _ => unreachable!(),
         }
     }
