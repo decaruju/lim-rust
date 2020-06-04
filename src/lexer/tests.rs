@@ -202,11 +202,14 @@ mod tests {
 
     #[test]
     fn float_without_digits() {
-        assert_eq!(super::lexer::lexer::lex("2 + ."), Some(vec![
-            super::lexer::token::Token::Number(String::from("2")),
-            super::lexer::token::Token::Plus,
-            super::lexer::token::Token::Period,
-        ]));
+        assert_eq!(
+            super::lexer::lexer::lex("2 + ."),
+            Some(vec![
+                super::lexer::token::Token::Number(String::from("2")),
+                super::lexer::token::Token::Plus,
+                super::lexer::token::Token::Period,
+            ])
+        );
     }
 
     #[test]
