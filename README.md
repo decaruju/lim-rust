@@ -1,10 +1,20 @@
 # GOALS
 - Orthogonality of features
 - No function declaration statement
-- F
+- No complex scoping, everything is function scoped, no globals
+- Small grammar
+  - no for/while constructs
+  - no if/else 
+- First class enum
+  - A pattern matching construct
+- Few reserved keywords
+  - boolean is an enum
 - Failing functions are async functions
 - No exceptions, every function returns an error monad
 - No limitations between language features and user code
   - Operator overloading
   - callable structs
   - natives monkey patching
+- Implicit type coercion when obvious
+- smallest minimal program
+  - no arcane `public static vois main` construct
