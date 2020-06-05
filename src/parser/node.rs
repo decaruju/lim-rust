@@ -6,23 +6,23 @@ pub enum Node {
     Assignment(Box<Node>, Box<Node>),
     Addition(Box<Node>, Box<Node>),
     Multiplication(Box<Node>, Box<Node>),
-    Number(Token),
-    Identifier(Token),
+    Number(String),
+    Identifier(String),
     Empty,
 }
 
 impl Node {
     pub fn start_of(token: Token) -> Option<Node> {
         match token {
-            Token::Identifier(_) => Some(Node::Identifier(token)),
-            Token::Number(_) => Some(Node::Number(token)),
+            Token::Identifier(string) => Some(Node::Identifier(string)),
+            Token::Number(string) => Some(Node::Number(string)),
             _ => None,
         }
     }
 
     pub fn continues(&self, token: &Token) -> Option<bool> {
         match self {
-            Node::Identifier(_identifier) => Some(*token == Token::Equal),
+            Node::Identifier(_identifier) => Some(*token == Token::Equal || *token == Token::Plus),
             Node::Number(_identifier) => Some(*token == Token::Plus || *token == Token::Times),
             Node::Assignment(_lhs, rhs) => rhs.continues(token),
             Node::Addition(_lhs, rhs) => rhs.continues(token),
@@ -37,6 +37,12 @@ impl Node {
             Node::Identifier(identifier) => match token {
                 Token::Equal => {
                     *self = Node::Assignment(
+                        Box::new(Node::Identifier(identifier.clone())),
+                        Box::new(Node::Empty),
+                    );
+                }
+                Token::Plus => {
+                    *self = Node::Addition(
                         Box::new(Node::Identifier(identifier.clone())),
                         Box::new(Node::Empty),
                     );

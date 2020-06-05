@@ -8,40 +8,29 @@ pub fn interpret(ast: Node, scope: &mut HashMap<String, Object>) -> Object {
     match ast {
         Node::Program(nodes) => {
             let mut rtn = Object::None;
+            println!("interpret, {:?}", nodes);
             for node in nodes {
                 rtn = interpret(node, scope);
             }
             rtn
         },
         Node::Addition(lhs, rhs) => add(interpret(*lhs, scope), interpret(*rhs, scope)),
-        Node::Number(number_token) => {
-            if let Token::Number(number_string) = number_token {
-                if number_string.contains('.') {
-                    Object::Float(number_string.parse::<f64>().unwrap())
-                } else {
-                    Object::Integer(number_string.parse::<i64>().unwrap())
-                }
+        Node::Number(number_string) => {
+            if number_string.contains('.') {
+                Object::Float(number_string.parse::<f64>().unwrap())
             } else {
-                Object::None
+                Object::Integer(number_string.parse::<i64>().unwrap())
             }
         }
-        Node::Identifier(literal_token) => {
-            if let Token::Identifier(literal_string) = literal_token {
-                scope.get(&literal_string).unwrap_or(&Object::None).to_owned()
-            } else {
-                Object::None
-            }
+        Node::Identifier(literal_string) => {
+            scope.get(&literal_string).unwrap_or(&Object::None).to_owned()
         }
         Node::Assignment(lhs, rhs) => {
-            if let Node::Identifier(variable_token) = *lhs {
-                if let Token::Identifier(variable_name) = variable_token {
-                    let value = interpret(*rhs, scope);
-                    scope.insert(variable_name, value);
-                    println!("{:?}", scope);
-                    Object::None
-                } else {
-                    Object::None
-                }
+            if let Node::Identifier(variable_name) = *lhs {
+                let value = interpret(*rhs, scope);
+                scope.insert(variable_name, value);
+                println!("{:?}", scope);
+                Object::None
             } else {
                 Object::None
             }

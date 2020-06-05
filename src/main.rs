@@ -14,5 +14,6 @@ fn run(string: &str) -> interpreter::object::Object {
 }
 
 fn main() {
-    println!("{:?}", run("x = 2; x+2"));
+    println!("{:?}", run("x = 3
+x+2"));
 }

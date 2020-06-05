@@ -13,9 +13,7 @@ mod tests {
     fn identifier() {
         assert_eq!(
             parse(vec![Token::Identifier(String::from("x")),]),
-            Some(Node::Program(vec![Node::Identifier(Token::Identifier(
-                String::from("x"),
-            ),),],),)
+            Some(Node::Program(vec![Node::Identifier(String::from("x")),],),)
         );
     }
 
@@ -23,9 +21,7 @@ mod tests {
     fn number() {
         assert_eq!(
             parse(vec![Token::Number(String::from("4")),]),
-            Some(Node::Program(vec![Node::Number(Token::Number(
-                String::from("4"),
-            ),),],),)
+            Some(Node::Program(vec![Node::Number(String::from("4"),),],),)
         );
     }
 
@@ -38,8 +34,8 @@ mod tests {
                 Token::Number(String::from("4")),
             ]),
             Some(Node::Program(vec![Node::Assignment(
-                Box::new(Node::Identifier(Token::Identifier(String::from("x"),),),),
-                Box::new(Node::Number(Token::Number(String::from("4"),),),),
+                Box::new(Node::Identifier(String::from("x"),),),
+                Box::new(Node::Number(String::from("4"),),),
             ),],),)
         );
     }
@@ -53,8 +49,8 @@ mod tests {
                 Token::Number(String::from("4.0")),
             ]),
             Some(Node::Program(vec![Node::Assignment(
-                Box::new(Node::Identifier(Token::Identifier(String::from("x"),),),),
-                Box::new(Node::Number(Token::Number(String::from("4.0"),),),),
+                Box::new(Node::Identifier(String::from("x"),),),
+                Box::new(Node::Number(String::from("4.0"),),),
             ),],),)
         );
     }
@@ -68,8 +64,23 @@ mod tests {
                 Token::Number(String::from("2.0")),
             ]),
             Some(Node::Program(vec![Node::Addition(
-                Box::new(Node::Number(Token::Number(String::from("2"),),),),
-                Box::new(Node::Number(Token::Number(String::from("2.0"),),),),
+                Box::new(Node::Number(String::from("2"),),),
+                Box::new(Node::Number(String::from("2.0"),),),
+            ),],),)
+        );
+    }
+
+    #[test]
+    fn variable_sum() {
+        assert_eq!(
+            parse(vec![
+                Token::Identifier(String::from("x")),
+                Token::Plus,
+                Token::Number(String::from("2.0")),
+            ]),
+            Some(Node::Program(vec![Node::Addition(
+                Box::new(Node::Identifier(String::from("x"),),),
+                Box::new(Node::Number(String::from("2.0"),),),
             ),],),)
         );
     }
@@ -86,10 +97,10 @@ mod tests {
             ]),
             Some(Node::Program(vec![Node::Addition(
                 Box::new(Node::Addition(
-                    Box::new(Node::Number(Token::Number(String::from("2"),),),),
-                    Box::new(Node::Number(Token::Number(String::from("2.0"),),),),
+                    Box::new(Node::Number(String::from("2"),),),
+                    Box::new(Node::Number(String::from("2.0"),),),
                 ),),
-                Box::new(Node::Number(Token::Number(String::from("3.0"),),),),
+                Box::new(Node::Number(String::from("3.0"),),),
             ),],),)
         );
     }
@@ -103,8 +114,8 @@ mod tests {
                 Token::Number(String::from("2.0")),
             ]),
             Some(Node::Program(vec![Node::Multiplication(
-                Box::new(Node::Number(Token::Number(String::from("2"),),),),
-                Box::new(Node::Number(Token::Number(String::from("2.0"),),),),
+                Box::new(Node::Number(String::from("2"),),),
+                Box::new(Node::Number(String::from("2.0"),),),
             ),],),)
         );
     }
@@ -121,10 +132,10 @@ mod tests {
             ]),
             Some(Node::Program(vec![Node::Multiplication(
                 Box::new(Node::Multiplication(
-                    Box::new(Node::Number(Token::Number(String::from("2"),),),),
-                    Box::new(Node::Number(Token::Number(String::from("2.0"),),),),
+                    Box::new(Node::Number(String::from("2"),),),
+                    Box::new(Node::Number(String::from("2.0"),),),
                 ),),
-                Box::new(Node::Number(Token::Number(String::from("3.0"),),),),
+                Box::new(Node::Number(String::from("3.0"),),),
             ),],),)
         );
     }
@@ -140,10 +151,10 @@ mod tests {
                 Token::Number(String::from("2")),
             ]),
             Some(Node::Program(vec![Node::Addition(
-                Box::new(Node::Number(Token::Number(String::from("2"),),),),
+                Box::new(Node::Number(String::from("2"),),),
                 Box::new(Node::Multiplication(
-                    Box::new(Node::Number(Token::Number(String::from("2"),),),),
-                    Box::new(Node::Number(Token::Number(String::from("2"),),),),
+                    Box::new(Node::Number(String::from("2"),),),
+                    Box::new(Node::Number(String::from("2"),),),
                 ),),
             ),],),)
         );
@@ -161,10 +172,10 @@ mod tests {
             ]),
             Some(Node::Program(vec![Node::Addition(
                 Box::new(Node::Multiplication(
-                    Box::new(Node::Number(Token::Number(String::from("2"),),),),
-                    Box::new(Node::Number(Token::Number(String::from("2"),),),),
+                    Box::new(Node::Number(String::from("2"),),),
+                    Box::new(Node::Number(String::from("2"),),),
                 ),),
-                Box::new(Node::Number(Token::Number(String::from("2"),),),),
+                Box::new(Node::Number(String::from("2"),),),
             ),],),)
         );
     }
