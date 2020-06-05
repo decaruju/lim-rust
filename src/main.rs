@@ -14,5 +14,5 @@ fn run(string: &str) -> interpreter::object::Object {
 }
 
 fn main() {
-    println!("{:?}", run("2"));
+    println!("{:?}", run("2+3.11"));
 }

@@ -25,6 +25,13 @@ pub fn interpret(ast: Node, scope: &mut HashMap<String, Object>) -> Object {
                 Object::None
             }
         }
+        Node::Identifier(literal_token) => {
+            if let Token::Identifier(literal_string) = literal_token {
+                scope.get(&literal_string).unwrap_or(&Object::None).to_owned()
+            } else {
+                Object::None
+            }
+        }
         Node::Assignment(lhs, rhs) => {
             if let Node::Identifier(variable_token) = *lhs {
                 if let Token::Identifier(variable_name) = variable_token {
