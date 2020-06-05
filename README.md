@@ -2,6 +2,7 @@
 - Orthogonality of features
 - No function declaration statement
 - No complex scoping, everything is function scoped, no globals
+- Only BigInts and doubles, no surprising number behaviour
 - Small grammar
   - no for/while constructs
   - no if/else 

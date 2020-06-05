@@ -1,15 +1,18 @@
+use std::collections::HashMap;
+
 mod lexer;
 mod parser;
+mod interpreter;
+
+fn run(string: &str) -> interpreter::object::Object {
+    interpreter::interpreter::interpret(
+        parser::parser::parse(
+            lexer::lexer::lex(string).unwrap()
+        ).unwrap(),
+        &mut HashMap::new(),
+    )
+}
 
 fn main() {
-    println!(
-        "{:?}",
-        lexer::lexer::lex(
-            "
-x = 4;
-foo = bar() + \"eat it\"
-baz = 'bim bap\'bop\''; 2+2+2
-"
-        )
-    );
+    println!("{:?}", run("2"));
 }
