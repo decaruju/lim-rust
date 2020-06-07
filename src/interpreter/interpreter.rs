@@ -4,11 +4,13 @@ use super::object::Object;
 use crate::parser::node::Node;
 use crate::lexer::token::Token;
 
+
 pub fn interpret(ast: Node, scope: &mut HashMap<String, Object>) -> Object {
+    let mut natives: HashMap<String, Object> = HashMap::new();
+    natives.insert(String::from("print"), Object::Native(String::from("print")));
     match ast {
         Node::Program(nodes) => {
             let mut rtn = Object::None;
-            println!("interpret, {:?}", nodes);
             for node in nodes {
                 rtn = interpret(node, scope);
             }
@@ -23,13 +25,17 @@ pub fn interpret(ast: Node, scope: &mut HashMap<String, Object>) -> Object {
             }
         }
         Node::Identifier(literal_string) => {
-            scope.get(&literal_string).unwrap_or(&Object::None).to_owned()
+            scope.get(&literal_string).unwrap_or(natives.get(&literal_string).unwrap_or(&Object::None)).to_owned()
+        }
+        Node::Call(callee, args) => {
+            let mut callee_object = interpret(*callee, scope);
+            let mut arg_objects = args.iter().map(|arg| interpret(arg.to_owned(), scope)).collect();
+            call(callee_object, arg_objects)
         }
         Node::Assignment(lhs, rhs) => {
             if let Node::Identifier(variable_name) = *lhs {
                 let value = interpret(*rhs, scope);
                 scope.insert(variable_name, value);
-                println!("{:?}", scope);
                 Object::None
             } else {
                 Object::None
@@ -54,6 +60,20 @@ fn add(lhs: Object, rhs: Object) -> Object {
                 Object::Float(rhs_value) => Object::Float(lhs_value + rhs_value),
                 _ => Object::None,
             }
+        }
+        _ => Object::None
+    }
+}
+
+fn call(callee: Object, args: Vec<Object>) -> Object {
+    match callee {
+        Object::Native(identifier) => {
+            if identifier == "print" {
+                for arg in args.iter() {
+                    println!("{:?}", arg);
+                }
+            }
+            Object::None
         }
         _ => Object::None
     }

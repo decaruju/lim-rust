@@ -179,4 +179,237 @@ mod tests {
             ),],),)
         );
     }
+
+    #[test]
+    fn function_call_without_args() {
+        assert_eq!(
+            parse(vec![
+                Token::Identifier(String::from("foo")),
+                Token::OpenParenthesis,
+                Token::CloseParenthesis,
+            ]),
+            Some(Node::Program(vec![Node::Call(
+                Box::new(Node::Identifier(String::from("foo"))),
+                vec![],
+            ),],),)
+        );
+    }
+
+    #[test]
+    fn function_call_addition_arg() {
+        assert_eq!(
+            parse(vec![
+                Token::Identifier(String::from("foo")),
+                Token::OpenParenthesis,
+                Token::Number(String::from("2")),
+                Token::Plus,
+                Token::Number(String::from("2")),
+                Token::CloseParenthesis,
+            ]),
+            Some(Node::Program(vec![Node::Call(
+                Box::new(Node::Identifier(String::from("foo"))),
+                vec![
+                    Node::Addition(
+                        Box::new(Node::Number(String::from("2"))),
+                        Box::new(Node::Number(String::from("2"))),
+                    ),
+                ],
+            ),],),)
+        );
+    }
+
+    #[test]
+    fn function_call_number_arg() {
+        assert_eq!(
+            parse(vec![
+                Token::Identifier(String::from("foo")),
+                Token::OpenParenthesis,
+                Token::Number(String::from("2")),
+                Token::CloseParenthesis,
+            ]),
+            Some(Node::Program(vec![Node::Call(
+                Box::new(Node::Identifier(String::from("foo"))),
+                vec![Node::Number(String::from("2"))],
+            ),],),)
+        );
+    }
+
+    // #[test]
+    // fn function_call_one_and_a_half_args() {
+    //     assert_eq!(
+    //         parse(vec![
+    //             Token::Identifier(String::from("foo")),
+    //             Token::OpenParenthesis,
+    //             Token::Number(String::from("2")),
+    //             Token::Comma,
+    //             Token::CloseParenthesis,
+    //         ]),
+    //         Some(Node::Program(vec![Node::Call(
+    //             Box::new(Node::Identifier(String::from("foo"))),
+    //             vec![
+    //                 Node::Number(String::from("2")),
+    //                 Node::Empty,
+    //             ],
+    //         ),],),)
+    //     );
+    // }
+
+    #[test]
+    fn function_call_two_args() {
+        assert_eq!(
+            parse(vec![
+                Token::Identifier(String::from("foo")),
+                Token::OpenParenthesis,
+                Token::Number(String::from("2")),
+                Token::Comma,
+                Token::Number(String::from("2")),
+                Token::CloseParenthesis,
+            ]),
+            Some(Node::Program(vec![Node::Call(
+                Box::new(Node::Identifier(String::from("foo"))),
+                vec![
+                    Node::Number(String::from("2")),
+                    Node::Number(String::from("2")),
+                ],
+            ),],),)
+        );
+    }
+
+    #[test]
+    fn function_call_first_arg_is_function_call() {
+        assert_eq!(
+            parse(vec![
+                Token::Identifier(String::from("foo")),
+                Token::OpenParenthesis,
+                Token::Identifier(String::from("bar")),
+                Token::OpenParenthesis,
+                Token::CloseParenthesis,
+                Token::CloseParenthesis,
+            ]),
+            Some(Node::Program(vec![Node::Call(
+                Box::new(Node::Identifier(String::from("foo"))),
+                vec![
+                    Node::Call(
+                        Box::new(
+                            Node::Identifier(
+                                String::from("bar"),
+                            ),
+                        ),
+                        vec![],
+                    ),
+                ],
+            ),],),)
+        );
+    }
+
+    #[test]
+    fn function_call_first_arg_is_function_call_with_arg() {
+        assert_eq!(
+            parse(vec![
+                Token::Identifier(String::from("foo")),
+                Token::OpenParenthesis,
+                Token::Identifier(String::from("bar")),
+                Token::OpenParenthesis,
+                Token::Identifier(String::from("baz")),
+                Token::CloseParenthesis,
+                Token::CloseParenthesis,
+            ]),
+            Some(Node::Program(vec![Node::Call(
+                Box::new(Node::Identifier(String::from("foo"))),
+                vec![
+                    Node::Call(
+                        Box::new(
+                            Node::Identifier(
+                                String::from("bar"),
+                            ),
+                        ),
+                        vec![
+                            Node::Identifier(
+                                String::from("baz"),
+                            ),
+                        ],
+                    ),
+                ],
+            ),],),)
+        );
+    }
+
+    #[test]
+    fn function_call_first_arg_is_function_call_with_two_args() {
+        assert_eq!(
+            parse(vec![
+                Token::Identifier(String::from("foo")),
+                Token::OpenParenthesis,
+                Token::Identifier(String::from("bar")),
+                Token::OpenParenthesis,
+                Token::Identifier(String::from("baz")),
+                Token::Comma,
+                Token::Identifier(String::from("bim")),
+                Token::CloseParenthesis,
+                Token::CloseParenthesis,
+            ]),
+            Some(Node::Program(vec![Node::Call(
+                Box::new(Node::Identifier(String::from("foo"))),
+                vec![
+                    Node::Call(
+                        Box::new(
+                            Node::Identifier(
+                                String::from("bar"),
+                            ),
+                        ),
+                        vec![
+                            Node::Identifier(
+                                String::from("baz"),
+                            ),
+                            Node::Identifier(
+                                String::from("bim"),
+                            ),
+                        ],
+                    ),
+                ],
+            ),],),)
+        );
+    }
+
+    #[test]
+    fn function_call_two_args_first_is_function_call_with_two_args() {
+        assert_eq!(
+            parse(vec![
+                Token::Identifier(String::from("foo")),
+                Token::OpenParenthesis,
+                Token::Identifier(String::from("bar")),
+                Token::OpenParenthesis,
+                Token::Identifier(String::from("baz")),
+                Token::Comma,
+                Token::Identifier(String::from("bim")),
+                Token::CloseParenthesis,
+                Token::Comma,
+                Token::Identifier(String::from("bam")),
+                Token::CloseParenthesis,
+            ]),
+            Some(Node::Program(vec![Node::Call(
+                Box::new(Node::Identifier(String::from("foo"))),
+                vec![
+                    Node::Call(
+                        Box::new(
+                            Node::Identifier(
+                                String::from("bar"),
+                            ),
+                        ),
+                        vec![
+                            Node::Identifier(
+                                String::from("baz"),
+                            ),
+                            Node::Identifier(
+                                String::from("bim"),
+                            ),
+                        ],
+                    ),
+                    Node::Identifier(
+                        String::from("bam"),
+                    ),
+                ],
+            ),],),)
+        );
+    }
 }
