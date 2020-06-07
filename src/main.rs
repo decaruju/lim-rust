@@ -7,10 +7,7 @@ mod lexer;
 mod parser;
 
 fn run(string: &str) -> interpreter::object::Object {
-    interpreter::interpreter::interpret(
-        parser::parser::parse(lexer::lexer::lex(string).unwrap()).unwrap(),
-        &mut HashMap::new(),
-    )
+    interpreter::interpreter::interpret(parser::parser::parse(lexer::lexer::lex(string).unwrap()).unwrap(), &mut HashMap::new())
 }
 
 fn main() {

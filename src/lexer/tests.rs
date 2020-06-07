@@ -204,11 +204,7 @@ mod tests {
     fn float_without_digits() {
         assert_eq!(
             super::lexer::lexer::lex("2 + ."),
-            Some(vec![
-                super::lexer::token::Token::Number(String::from("2")),
-                super::lexer::token::Token::Plus,
-                super::lexer::token::Token::Period,
-            ])
+            Some(vec![super::lexer::token::Token::Number(String::from("2")), super::lexer::token::Token::Plus, super::lexer::token::Token::Period,])
         );
     }
 
@@ -385,46 +381,22 @@ mod tests {
 
     #[test]
     fn string_literal_double_quotes() {
-        assert_eq!(
-            super::lexer::lexer::lex("\"foo\""),
-            Some(vec![super::lexer::token::Token::Literal(
-                String::from("foo"),
-                '"'
-            ),])
-        );
+        assert_eq!(super::lexer::lexer::lex("\"foo\""), Some(vec![super::lexer::token::Token::Literal(String::from("foo"), '"'),]));
     }
 
     #[test]
     fn string_literal_single_quotes() {
-        assert_eq!(
-            super::lexer::lexer::lex("'foo'"),
-            Some(vec![super::lexer::token::Token::Literal(
-                String::from("foo"),
-                '\''
-            ),])
-        );
+        assert_eq!(super::lexer::lexer::lex("'foo'"), Some(vec![super::lexer::token::Token::Literal(String::from("foo"), '\''),]));
     }
 
     #[test]
     fn string_literal_with_escaped_single_quotes() {
-        assert_eq!(
-            super::lexer::lexer::lex("'f\\\'o\\\'o'"),
-            Some(vec![super::lexer::token::Token::Literal(
-                String::from("f'o'o"),
-                '\''
-            ),])
-        );
+        assert_eq!(super::lexer::lexer::lex("'f\\\'o\\\'o'"), Some(vec![super::lexer::token::Token::Literal(String::from("f'o'o"), '\''),]));
     }
 
     #[test]
     fn string_literal_with_escaped_double_quotes() {
-        assert_eq!(
-            super::lexer::lexer::lex("\"f\\\"o\\\"o\""),
-            Some(vec![super::lexer::token::Token::Literal(
-                String::from("f\"o\"o"),
-                '"'
-            ),])
-        );
+        assert_eq!(super::lexer::lexer::lex("\"f\\\"o\\\"o\""), Some(vec![super::lexer::token::Token::Literal(String::from("f\"o\"o"), '"'),]));
     }
 
     #[test]

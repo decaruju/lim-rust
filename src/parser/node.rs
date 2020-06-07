@@ -28,24 +28,11 @@ impl Node {
     pub fn continues(&self, token: &Token) -> Option<bool> {
         match self {
             Node::Identifier(_identifier) => match token {
-                Token::Equal
-                    | Token::Plus
-                    | Token::Minus
-                    | Token::Times
-                    | Token::Division
-                    | Token::Period
-                    | Token::Modulus
-                    | Token::OpenParenthesis => Some(true),
+                Token::Equal | Token::Plus | Token::Minus | Token::Times | Token::Division | Token::Period | Token::Modulus | Token::OpenParenthesis => Some(true),
                 _ => Some(false),
             },
             Node::Number(_identifier) => match token {
-                Token::Plus
-                | Token::Minus
-                | Token::Times
-                | Token::Division
-                | Token::Period
-                | Token::Modulus
-                | Token::OpenParenthesis => Some(true),
+                Token::Plus | Token::Minus | Token::Times | Token::Division | Token::Period | Token::Modulus | Token::OpenParenthesis => Some(true),
                 _ => Some(false),
             },
             Node::Addition(_lhs, rhs) => rhs.continues(token),
@@ -73,47 +60,27 @@ impl Node {
 
     pub fn append(&mut self, token: Token) {
         match self {
-            Node::Identifier(_)
-                | Node::Number(_) => match token {
+            Node::Identifier(_) | Node::Number(_) => match token {
                 Token::Equal => {
-                    *self = Node::Assignment(
-                        Box::new(self.clone()),
-                        Box::new(Node::Empty),
-                    );
+                    *self = Node::Assignment(Box::new(self.clone()), Box::new(Node::Empty));
                 }
                 Token::Plus => {
-                    *self = Node::Addition(
-                        Box::new(self.clone()),
-                        Box::new(Node::Empty),
-                    );
+                    *self = Node::Addition(Box::new(self.clone()), Box::new(Node::Empty));
                 }
                 Token::Minus => {
-                    *self = Node::Substraction(
-                        Box::new(self.clone()),
-                        Box::new(Node::Empty),
-                    );
+                    *self = Node::Substraction(Box::new(self.clone()), Box::new(Node::Empty));
                 }
                 Token::Times => {
-                    *self = Node::Multiplication(
-                        Box::new(self.clone()),
-                        Box::new(Node::Empty),
-                    );
+                    *self = Node::Multiplication(Box::new(self.clone()), Box::new(Node::Empty));
                 }
                 Token::Division => {
-                    *self = Node::Division(
-                        Box::new(self.clone()),
-                        Box::new(Node::Empty),
-                    );
+                    *self = Node::Division(Box::new(self.clone()), Box::new(Node::Empty));
                 }
                 Token::Modulus => {
-                    *self = Node::Modulus(
-                        Box::new(self.clone()),
-                        Box::new(Node::Empty),
-                    );
+                    *self = Node::Modulus(Box::new(self.clone()), Box::new(Node::Empty));
                 }
                 Token::OpenParenthesis => {
-                    *self =
-                        Node::PartialCall(Box::new(self.clone()), vec![]);
+                    *self = Node::PartialCall(Box::new(self.clone()), vec![]);
                 }
                 Token::Period => {
                     unimplemented!();
@@ -121,47 +88,33 @@ impl Node {
                 _ => {}
             },
             Node::Addition(_lhs, rhs) => match token {
-                Token::Plus => {
-                    *self = Node::Addition(Box::new(self.clone()), Box::new(Node::Empty))
-                }
+                Token::Plus => *self = Node::Addition(Box::new(self.clone()), Box::new(Node::Empty)),
                 _ => {
                     rhs.append(token);
                 }
             },
             Node::Substraction(_lhs, rhs) => match token {
-                Token::Plus => {
-                    *self = Node::Addition(Box::new(self.clone()), Box::new(Node::Empty))
-                }
+                Token::Plus => *self = Node::Addition(Box::new(self.clone()), Box::new(Node::Empty)),
                 _ => {
                     rhs.append(token);
                 }
             },
             Node::Modulus(_lhs, rhs) => match token {
-                Token::Plus => {
-                    *self = Node::Addition(Box::new(self.clone()), Box::new(Node::Empty))
-                }
+                Token::Plus => *self = Node::Addition(Box::new(self.clone()), Box::new(Node::Empty)),
                 _ => {
                     rhs.append(token);
                 }
             },
             Node::Multiplication(_lhs, rhs) => match token {
-                Token::Times => {
-                    *self = Node::Multiplication(Box::new(self.clone()), Box::new(Node::Empty))
-                }
-                Token::Plus => {
-                    *self = Node::Addition(Box::new(self.clone()), Box::new(Node::Empty))
-                }
+                Token::Times => *self = Node::Multiplication(Box::new(self.clone()), Box::new(Node::Empty)),
+                Token::Plus => *self = Node::Addition(Box::new(self.clone()), Box::new(Node::Empty)),
                 _ => {
                     rhs.append(token);
                 }
             },
             Node::Division(_lhs, rhs) => match token {
-                Token::Times => {
-                    *self = Node::Multiplication(Box::new(self.clone()), Box::new(Node::Empty))
-                }
-                Token::Plus => {
-                    *self = Node::Addition(Box::new(self.clone()), Box::new(Node::Empty))
-                }
+                Token::Times => *self = Node::Multiplication(Box::new(self.clone()), Box::new(Node::Empty)),
+                Token::Plus => *self = Node::Addition(Box::new(self.clone()), Box::new(Node::Empty)),
                 _ => {
                     rhs.append(token);
                 }

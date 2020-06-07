@@ -23,16 +23,10 @@ pub fn interpret(ast: Node, scope: &mut HashMap<String, Object>) -> Object {
                 Object::Integer(number_string.parse::<i64>().unwrap())
             }
         }
-        Node::Identifier(literal_string) => scope
-            .get(&literal_string)
-            .unwrap_or(natives.get(&literal_string).unwrap_or(&Object::None))
-            .to_owned(),
+        Node::Identifier(literal_string) => scope.get(&literal_string).unwrap_or(natives.get(&literal_string).unwrap_or(&Object::None)).to_owned(),
         Node::Call(callee, args) => {
             let mut callee_object = interpret(*callee, scope);
-            let mut arg_objects = args
-                .iter()
-                .map(|arg| interpret(arg.to_owned(), scope))
-                .collect();
+            let mut arg_objects = args.iter().map(|arg| interpret(arg.to_owned(), scope)).collect();
             call(callee_object, arg_objects)
         }
         Node::Assignment(lhs, rhs) => {

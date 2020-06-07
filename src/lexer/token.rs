@@ -69,15 +69,10 @@ impl Token {
     pub fn continues(&self, character: char) -> Option<bool> {
         match self {
             Token::Period => Some(character.is_digit(10)),
-            Token::Identifier(_) => {
-                Some(character.is_alphabetic() || character.is_digit(10) || character == '_')
-            }
+            Token::Identifier(_) => Some(character.is_alphabetic() || character.is_digit(10) || character == '_'),
             Token::Literal(string, delimiter) => {
                 let escaped_delimiter = format!("\\{}", delimiter);
-                Some(
-                    string.matches(*delimiter).count() - string.matches(&escaped_delimiter).count()
-                        != 2,
-                )
+                Some(string.matches(*delimiter).count() - string.matches(&escaped_delimiter).count() != 2)
             }
             Token::Number(string) => {
                 if character.is_digit(10) {
