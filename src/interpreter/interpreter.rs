@@ -1,9 +1,8 @@
 use std::collections::HashMap;
 
 use super::object::Object;
-use crate::parser::node::Node;
 use crate::lexer::token::Token;
-
+use crate::parser::node::Node;
 
 pub fn interpret(ast: Node, scope: &mut HashMap<String, Object>) -> Object {
     let mut natives: HashMap<String, Object> = HashMap::new();
@@ -15,7 +14,7 @@ pub fn interpret(ast: Node, scope: &mut HashMap<String, Object>) -> Object {
                 rtn = interpret(node, scope);
             }
             rtn
-        },
+        }
         Node::Addition(lhs, rhs) => add(interpret(*lhs, scope), interpret(*rhs, scope)),
         Node::Number(number_string) => {
             if number_string.contains('.') {
@@ -24,12 +23,16 @@ pub fn interpret(ast: Node, scope: &mut HashMap<String, Object>) -> Object {
                 Object::Integer(number_string.parse::<i64>().unwrap())
             }
         }
-        Node::Identifier(literal_string) => {
-            scope.get(&literal_string).unwrap_or(natives.get(&literal_string).unwrap_or(&Object::None)).to_owned()
-        }
+        Node::Identifier(literal_string) => scope
+            .get(&literal_string)
+            .unwrap_or(natives.get(&literal_string).unwrap_or(&Object::None))
+            .to_owned(),
         Node::Call(callee, args) => {
             let mut callee_object = interpret(*callee, scope);
-            let mut arg_objects = args.iter().map(|arg| interpret(arg.to_owned(), scope)).collect();
+            let mut arg_objects = args
+                .iter()
+                .map(|arg| interpret(arg.to_owned(), scope))
+                .collect();
             call(callee_object, arg_objects)
         }
         Node::Assignment(lhs, rhs) => {
@@ -47,21 +50,17 @@ pub fn interpret(ast: Node, scope: &mut HashMap<String, Object>) -> Object {
 
 fn add(lhs: Object, rhs: Object) -> Object {
     match lhs {
-        Object::Integer(lhs_value) => {
-            match rhs {
-                Object::Integer(rhs_value) => Object::Integer(lhs_value + rhs_value),
-                Object::Float(rhs_value) => Object::Float(lhs_value as f64 + rhs_value),
-                _ => Object::None,
-            }
-        }
-        Object::Float(lhs_value) => {
-            match rhs {
-                Object::Integer(rhs_value) => Object::Float(lhs_value + rhs_value as f64),
-                Object::Float(rhs_value) => Object::Float(lhs_value + rhs_value),
-                _ => Object::None,
-            }
-        }
-        _ => Object::None
+        Object::Integer(lhs_value) => match rhs {
+            Object::Integer(rhs_value) => Object::Integer(lhs_value + rhs_value),
+            Object::Float(rhs_value) => Object::Float(lhs_value as f64 + rhs_value),
+            _ => Object::None,
+        },
+        Object::Float(lhs_value) => match rhs {
+            Object::Integer(rhs_value) => Object::Float(lhs_value + rhs_value as f64),
+            Object::Float(rhs_value) => Object::Float(lhs_value + rhs_value),
+            _ => Object::None,
+        },
+        _ => Object::None,
     }
 }
 
@@ -75,6 +74,6 @@ fn call(callee: Object, args: Vec<Object>) -> Object {
             }
             Object::None
         }
-        _ => Object::None
+        _ => Object::None,
     }
 }

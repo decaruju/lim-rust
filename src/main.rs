@@ -2,15 +2,13 @@ use std::collections::HashMap;
 use std::fs::File;
 use std::io::prelude::*;
 
+mod interpreter;
 mod lexer;
 mod parser;
-mod interpreter;
 
 fn run(string: &str) -> interpreter::object::Object {
     interpreter::interpreter::interpret(
-        parser::parser::parse(
-            lexer::lexer::lex(string).unwrap()
-        ).unwrap(),
+        parser::parser::parse(lexer::lexer::lex(string).unwrap()).unwrap(),
         &mut HashMap::new(),
     )
 }

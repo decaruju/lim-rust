@@ -71,6 +71,36 @@ mod tests {
     }
 
     #[test]
+    fn minus() {
+        assert_eq!(
+            parse(vec![
+                Token::Number(String::from("2")),
+                Token::Minus,
+                Token::Number(String::from("2.0")),
+            ]),
+            Some(Node::Program(vec![Node::Substraction(
+                Box::new(Node::Number(String::from("2"),),),
+                Box::new(Node::Number(String::from("2.0"),),),
+            ),],),)
+        );
+    }
+
+    #[test]
+    fn modulus() {
+        assert_eq!(
+            parse(vec![
+                Token::Number(String::from("2")),
+                Token::Modulus,
+                Token::Number(String::from("2.0")),
+            ]),
+            Some(Node::Program(vec![Node::Modulus(
+                Box::new(Node::Number(String::from("2"),),),
+                Box::new(Node::Number(String::from("2.0"),),),
+            ),],),)
+        );
+    }
+
+    #[test]
     fn variable_sum() {
         assert_eq!(
             parse(vec![
@@ -79,6 +109,66 @@ mod tests {
                 Token::Number(String::from("2.0")),
             ]),
             Some(Node::Program(vec![Node::Addition(
+                Box::new(Node::Identifier(String::from("x"),),),
+                Box::new(Node::Number(String::from("2.0"),),),
+            ),],),)
+        );
+    }
+
+    #[test]
+    fn variable_minus() {
+        assert_eq!(
+            parse(vec![
+                Token::Identifier(String::from("x")),
+                Token::Minus,
+                Token::Number(String::from("2.0")),
+            ]),
+            Some(Node::Program(vec![Node::Substraction(
+                Box::new(Node::Identifier(String::from("x"),),),
+                Box::new(Node::Number(String::from("2.0"),),),
+            ),],),)
+        );
+    }
+
+    #[test]
+    fn variable_times() {
+        assert_eq!(
+            parse(vec![
+                Token::Identifier(String::from("x")),
+                Token::Times,
+                Token::Number(String::from("2.0")),
+            ]),
+            Some(Node::Program(vec![Node::Multiplication(
+                Box::new(Node::Identifier(String::from("x"),),),
+                Box::new(Node::Number(String::from("2.0"),),),
+            ),],),)
+        );
+    }
+
+    #[test]
+    fn variable_division() {
+        assert_eq!(
+            parse(vec![
+                Token::Identifier(String::from("x")),
+                Token::Division,
+                Token::Number(String::from("2.0")),
+            ]),
+            Some(Node::Program(vec![Node::Division(
+                Box::new(Node::Identifier(String::from("x"),),),
+                Box::new(Node::Number(String::from("2.0"),),),
+            ),],),)
+        );
+    }
+
+    #[test]
+    fn variable_modulus() {
+        assert_eq!(
+            parse(vec![
+                Token::Identifier(String::from("x")),
+                Token::Modulus,
+                Token::Number(String::from("2.0")),
+            ]),
+            Some(Node::Program(vec![Node::Modulus(
                 Box::new(Node::Identifier(String::from("x"),),),
                 Box::new(Node::Number(String::from("2.0"),),),
             ),],),)
@@ -114,6 +204,21 @@ mod tests {
                 Token::Number(String::from("2.0")),
             ]),
             Some(Node::Program(vec![Node::Multiplication(
+                Box::new(Node::Number(String::from("2"),),),
+                Box::new(Node::Number(String::from("2.0"),),),
+            ),],),)
+        );
+    }
+
+    #[test]
+    fn division() {
+        assert_eq!(
+            parse(vec![
+                Token::Number(String::from("2")),
+                Token::Division,
+                Token::Number(String::from("2.0")),
+            ]),
+            Some(Node::Program(vec![Node::Division(
                 Box::new(Node::Number(String::from("2"),),),
                 Box::new(Node::Number(String::from("2.0"),),),
             ),],),)
@@ -208,12 +313,10 @@ mod tests {
             ]),
             Some(Node::Program(vec![Node::Call(
                 Box::new(Node::Identifier(String::from("foo"))),
-                vec![
-                    Node::Addition(
-                        Box::new(Node::Number(String::from("2"))),
-                        Box::new(Node::Number(String::from("2"))),
-                    ),
-                ],
+                vec![Node::Addition(
+                    Box::new(Node::Number(String::from("2"))),
+                    Box::new(Node::Number(String::from("2"))),
+                ),],
             ),],),)
         );
     }
@@ -288,16 +391,10 @@ mod tests {
             ]),
             Some(Node::Program(vec![Node::Call(
                 Box::new(Node::Identifier(String::from("foo"))),
-                vec![
-                    Node::Call(
-                        Box::new(
-                            Node::Identifier(
-                                String::from("bar"),
-                            ),
-                        ),
-                        vec![],
-                    ),
-                ],
+                vec![Node::Call(
+                    Box::new(Node::Identifier(String::from("bar"),),),
+                    vec![],
+                ),],
             ),],),)
         );
     }
@@ -316,20 +413,10 @@ mod tests {
             ]),
             Some(Node::Program(vec![Node::Call(
                 Box::new(Node::Identifier(String::from("foo"))),
-                vec![
-                    Node::Call(
-                        Box::new(
-                            Node::Identifier(
-                                String::from("bar"),
-                            ),
-                        ),
-                        vec![
-                            Node::Identifier(
-                                String::from("baz"),
-                            ),
-                        ],
-                    ),
-                ],
+                vec![Node::Call(
+                    Box::new(Node::Identifier(String::from("bar"),),),
+                    vec![Node::Identifier(String::from("baz"),),],
+                ),],
             ),],),)
         );
     }
@@ -350,23 +437,13 @@ mod tests {
             ]),
             Some(Node::Program(vec![Node::Call(
                 Box::new(Node::Identifier(String::from("foo"))),
-                vec![
-                    Node::Call(
-                        Box::new(
-                            Node::Identifier(
-                                String::from("bar"),
-                            ),
-                        ),
-                        vec![
-                            Node::Identifier(
-                                String::from("baz"),
-                            ),
-                            Node::Identifier(
-                                String::from("bim"),
-                            ),
-                        ],
-                    ),
-                ],
+                vec![Node::Call(
+                    Box::new(Node::Identifier(String::from("bar"),),),
+                    vec![
+                        Node::Identifier(String::from("baz"),),
+                        Node::Identifier(String::from("bim"),),
+                    ],
+                ),],
             ),],),)
         );
     }
@@ -391,23 +468,13 @@ mod tests {
                 Box::new(Node::Identifier(String::from("foo"))),
                 vec![
                     Node::Call(
-                        Box::new(
-                            Node::Identifier(
-                                String::from("bar"),
-                            ),
-                        ),
+                        Box::new(Node::Identifier(String::from("bar"),),),
                         vec![
-                            Node::Identifier(
-                                String::from("baz"),
-                            ),
-                            Node::Identifier(
-                                String::from("bim"),
-                            ),
+                            Node::Identifier(String::from("baz"),),
+                            Node::Identifier(String::from("bim"),),
                         ],
                     ),
-                    Node::Identifier(
-                        String::from("bam"),
-                    ),
+                    Node::Identifier(String::from("bam"),),
                 ],
             ),],),)
         );
