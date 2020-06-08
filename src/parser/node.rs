@@ -13,6 +13,11 @@ pub enum Node {
     Identifier(String),
     Call(Box<Node>, Vec<Node>),
     PartialCall(Box<Node>, Vec<Node>),
+    Parenthesized(Box<Node>),
+    PartialParenthesized(Box<Node>),
+    FunctionArgs(Vec<Node>),
+    PartialFunctionDefinition(Vec<Node>, Vec<Node>),
+    FunctionDefinition(Vec<Node>, Vec<Node>),
     Empty,
 }
 
@@ -21,6 +26,8 @@ impl Node {
         match token {
             Token::Identifier(string) => Some(Node::Identifier(string)),
             Token::Number(string) => Some(Node::Number(string)),
+            Token::OpenParenthesis => Some(Node::PartialParenthesized(Box::new(Node::Empty))),
+            Token::OpenBrace => Some(Node::PartialFunctionDefinition(vec![], vec![Node::Empty])),
             _ => None,
         }
     }
@@ -35,12 +42,37 @@ impl Node {
                 Token::Plus | Token::Minus | Token::Times | Token::Division | Token::Period | Token::Modulus | Token::OpenParenthesis => Some(true),
                 _ => Some(false),
             },
+            Node::Parenthesized(_identifier) => match token {
+                Token::Plus | Token::Minus | Token::Times | Token::Division | Token::Period | Token::Modulus | Token::OpenParenthesis => Some(true),
+                _ => Some(false),
+            },
             Node::Addition(_lhs, rhs) => rhs.continues(token),
             Node::Substraction(_lhs, rhs) => rhs.continues(token),
             Node::Multiplication(_lhs, rhs) => rhs.continues(token),
             Node::Division(_lhs, rhs) => rhs.continues(token),
             Node::Modulus(_lhs, rhs) => rhs.continues(token),
             Node::Assignment(_lhs, rhs) => rhs.continues(token),
+            Node::PartialFunctionDefinition(_args, nodes) => {
+                let last_node = nodes.last().unwrap();
+                if last_node.continues(&token).unwrap() {
+                    Some(true)
+                } else {
+                    match token {
+                        Token::CloseBrace => Some(true),
+                        _ => Some(false),
+                    }
+                }
+            }
+            Node::PartialParenthesized(node) => {
+                if node.continues(&token).unwrap() {
+                    Some(true)
+                } else {
+                    match token {
+                        Token::CloseParenthesis => Some(true),
+                        _ => Some(false),
+                    }
+                }
+            }
             Node::Call(_lhs, rhs) => Some(false),
             Node::PartialCall(_lhs, rhs) => match token {
                 Token::Comma => Some(true),
@@ -53,7 +85,12 @@ impl Node {
                     }
                 }
             },
-            Node::Empty => Some(true),
+            Node::Empty => {
+                match token {
+                    Token::CloseBrace => Some(false),
+                    _ => Some(true),
+                }
+            },
             _ => Some(false),
         }
     }
@@ -87,6 +124,10 @@ impl Node {
                 }
                 _ => {}
             },
+            Node::Parenthesized(node) => match token {
+                Token::Times => *self = Node::Multiplication(Box::new(self.clone()), Box::new(Node::Empty)),
+                _ => unimplemented!(),
+            },
             Node::Addition(_lhs, rhs) => match token {
                 Token::Plus => *self = Node::Addition(Box::new(self.clone()), Box::new(Node::Empty)),
                 _ => {
@@ -117,6 +158,28 @@ impl Node {
                 Token::Plus => *self = Node::Addition(Box::new(self.clone()), Box::new(Node::Empty)),
                 _ => {
                     rhs.append(token);
+                }
+            },
+            Node::PartialParenthesized(node) => {
+                if node.continues(&token).unwrap() {
+                    node.append(token);
+                } else {
+                    if token == Token::CloseParenthesis {
+                        *self = Node::Parenthesized(node.clone());
+                    }
+                }
+            },
+            Node::PartialFunctionDefinition(args, nodes) => {
+                let mut last_node = nodes.last_mut().unwrap();
+                if last_node.continues(&token).unwrap() {
+                    last_node.append(token);
+                } else {
+                    if token == Token::CloseBrace {
+                        if *last_node == Node::Empty {
+                            nodes.remove(nodes.len()-1);
+                        }
+                        *self = Node::FunctionDefinition(args.to_vec(), nodes.to_vec());
+                    }
                 }
             },
             Node::PartialCall(callee, args) => match token {

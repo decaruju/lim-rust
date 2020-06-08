@@ -1,3 +1,5 @@
+use crate::parser::node::Node;
+
 #[derive(Debug, Clone)]
 pub enum Object {
     None,
@@ -5,4 +7,5 @@ pub enum Object {
     Float(f64),
     String(String),
     Native(String),
+    Function(Vec<Node>),
 }

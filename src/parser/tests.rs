@@ -317,4 +317,67 @@ mod tests {
             ),],),)
         );
     }
+
+    #[test]
+    fn parenthesized_addition() {
+        assert_eq!(
+            parse(vec![
+                Token::OpenParenthesis,
+                Token::Identifier(String::from("bar")),
+                Token::Plus,
+                Token::Number(String::from("2")),
+                Token::CloseParenthesis,
+            ]),
+            Some(Node::Program(vec![Node::Parenthesized(
+                Box::new(Node::Addition(
+                    Box::new(Node::Identifier(String::from("bar"))),
+                    Box::new(Node::Number(String::from("2"))),
+                )),
+            ),],),)
+        );
+    }
+
+    #[test]
+    fn parenthesized_addition_times() {
+        assert_eq!(
+            parse(vec![
+                Token::OpenParenthesis,
+                Token::Identifier(String::from("bar")),
+                Token::Plus,
+                Token::Number(String::from("2")),
+                Token::CloseParenthesis,
+                Token::Times,
+                Token::Number(String::from("2")),
+            ]),
+            Some(Node::Program(vec![
+                Node::Multiplication(
+                    Box::new(
+                        Node::Parenthesized(
+                            Box::new(Node::Addition(
+                                Box::new(Node::Identifier(String::from("bar"))),
+                                Box::new(Node::Number(String::from("2"))),
+                            )),
+                        ),
+                    ),
+                    Box::new(Node::Number(String::from("2"))),
+                ),
+            ],),)
+        );
+    }
+
+    #[test]
+    fn function_definition_no_args() {
+        assert_eq!(
+            parse(vec![
+                Token::OpenBrace,
+                Token::CloseBrace,
+            ]),
+            Some(Node::Program(vec![
+                Node::FunctionDefinition(
+                    vec![],
+                    vec![],
+                ),
+            ],),)
+        );
+    }
 }
