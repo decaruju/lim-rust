@@ -1,3 +1,6 @@
-foo = { print(2) }
+foo = {
+  print(2)
+}
 
+print(foo)
 foo()

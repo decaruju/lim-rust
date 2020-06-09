@@ -1,7 +1,6 @@
 use std::collections::HashMap;
 
 use super::object::Object;
-use crate::lexer::token::Token;
 use crate::parser::node::Node;
 
 pub fn interpret(ast: Node, scope: &mut HashMap<String, Object>) -> Object {
@@ -32,7 +31,7 @@ pub fn interpret(ast: Node, scope: &mut HashMap<String, Object>) -> Object {
         Node::Call(callee, args) => {
             let mut callee_object = interpret(*callee, scope);
             let mut arg_objects = args.iter().map(|arg| interpret(arg.to_owned(), scope)).collect();
-            call(callee_object, arg_objects)
+            call(&callee_object, arg_objects)
         }
         Node::Assignment(lhs, rhs) => {
             if let Node::Identifier(variable_name) = *lhs {
@@ -80,14 +79,15 @@ fn multiply(lhs: Object, rhs: Object) -> Object {
 }
 
 fn to_string(obj: &Object) -> String {
-    match *obj {
+    match &*obj {
         Object::Integer(number) => format!("{}", number),
         Object::Float(number) => format!("{}", number),
+        Object::Function(_body) => format!("{:?}", obj),
         _ => "".to_string(),
     }
 }
 
-fn call(callee: Object, args: Vec<Object>) -> Object {
+fn call(callee: &Object, args: Vec<Object>) -> Object {
     match callee {
         Object::Native(identifier) => {
             if identifier == "print" {
@@ -99,8 +99,10 @@ fn call(callee: Object, args: Vec<Object>) -> Object {
         }
         Object::Function(body) => {
             let mut rtn = Object::None;
+            let mut scope = HashMap::new();
+            scope.insert("self".to_string(), callee.clone());
             for node in body.iter() {
-                rtn = interpret(node.to_owned(), &mut HashMap::new());
+                rtn = interpret(node.to_owned(), &mut scope);
             }
             rtn
         }

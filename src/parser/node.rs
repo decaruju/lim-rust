@@ -28,6 +28,7 @@ impl Node {
             Token::Number(string) => Some(Node::Number(string)),
             Token::OpenParenthesis => Some(Node::PartialParenthesized(Box::new(Node::Empty))),
             Token::OpenBrace => Some(Node::PartialFunctionDefinition(vec![], vec![Node::Empty])),
+            Token::NewLine | Token::SemiColon => Some(Node::Empty),
             _ => None,
         }
     }
@@ -58,7 +59,7 @@ impl Node {
                     Some(true)
                 } else {
                     match token {
-                        Token::CloseBrace => Some(true),
+                        Token::CloseBrace | Token::NewLine | Token::SemiColon => Some(true),
                         _ => Some(false),
                     }
                 }
@@ -174,11 +175,17 @@ impl Node {
                 if last_node.continues(&token).unwrap() {
                     last_node.append(token);
                 } else {
-                    if token == Token::CloseBrace {
-                        if *last_node == Node::Empty {
-                            nodes.remove(nodes.len()-1);
+                    match token {
+                        Token::CloseBrace => {
+                            if *last_node == Node::Empty {
+                                nodes.remove(nodes.len()-1);
+                            }
+                            *self = Node::FunctionDefinition(args.to_vec(), nodes.to_vec());
                         }
-                        *self = Node::FunctionDefinition(args.to_vec(), nodes.to_vec());
+                        Token::NewLine => {
+                            nodes.push(Node::Empty);
+                        }
+                        _ => {}
                     }
                 }
             },

@@ -366,7 +366,7 @@ mod tests {
     }
 
     #[test]
-    fn function_definition_no_args() {
+    fn function_definition_no_args_no_body() {
         assert_eq!(
             parse(vec![
                 Token::OpenBrace,
@@ -376,6 +376,154 @@ mod tests {
                 Node::FunctionDefinition(
                     vec![],
                     vec![],
+                ),
+            ],),)
+        );
+    }
+
+    #[test]
+    fn function_definition_no_args_no_body_with_linebreak() {
+        assert_eq!(
+            parse(vec![
+                Token::OpenBrace,
+                Token::NewLine,
+                Token::CloseBrace,
+            ]),
+            Some(Node::Program(vec![
+                Node::FunctionDefinition(
+                    vec![],
+                    vec![],
+                ),
+            ],),)
+        );
+    }
+
+    #[test]
+    fn function_definition_no_args_single_statement() {
+        assert_eq!(
+            parse(vec![
+                Token::OpenBrace,
+                Token::Identifier(String::from("foo")),
+                Token::OpenParenthesis,
+                Token::CloseParenthesis,
+                Token::CloseBrace,
+            ]),
+            Some(Node::Program(vec![
+                Node::FunctionDefinition(
+                    vec![],
+                    vec![
+                        Node::Call(
+                            Box::new(
+                                Node::Identifier(
+                                    String::from("foo"),
+                                ),
+                            ),
+                            vec![],
+                        )
+                    ],
+                ),
+            ],),)
+        );
+    }
+
+    #[test]
+    fn function_definition_no_args_single_statement_with_linebreaks() {
+        assert_eq!(
+            parse(vec![
+                Token::OpenBrace,
+                Token::NewLine,
+                Token::Identifier(String::from("foo")),
+                Token::OpenParenthesis,
+                Token::CloseParenthesis,
+                Token::NewLine,
+                Token::CloseBrace,
+            ]),
+            Some(Node::Program(vec![
+                Node::FunctionDefinition(
+                    vec![],
+                    vec![
+                        Node::Call(
+                            Box::new(
+                                Node::Identifier(
+                                    String::from("foo"),
+                                ),
+                            ),
+                            vec![],
+                        )
+                    ],
+                ),
+            ],),)
+        );
+    }
+
+    #[test]
+    fn function_definition_no_args_single_statement_with_linebreaks_and_semi_colon() {
+        assert_eq!(
+            parse(vec![
+                Token::OpenBrace,
+                Token::NewLine,
+                Token::Identifier(String::from("foo")),
+                Token::OpenParenthesis,
+                Token::CloseParenthesis,
+                Token::SemiColon,
+                Token::NewLine,
+                Token::CloseBrace,
+            ]),
+            Some(Node::Program(vec![
+                Node::FunctionDefinition(
+                    vec![],
+                    vec![
+                        Node::Call(
+                            Box::new(
+                                Node::Identifier(
+                                    String::from("foo"),
+                                ),
+                            ),
+                            vec![],
+                        )
+                    ],
+                ),
+            ],),)
+        );
+    }
+
+    #[test]
+    fn function_definition_no_args_two_statements() {
+        assert_eq!(
+            parse(vec![
+                Token::OpenBrace,
+                Token::NewLine,
+                Token::Identifier(String::from("foo")),
+                Token::OpenParenthesis,
+                Token::CloseParenthesis,
+                Token::NewLine,
+                Token::Identifier(String::from("bar")),
+                Token::OpenParenthesis,
+                Token::CloseParenthesis,
+                Token::NewLine,
+                Token::CloseBrace,
+            ]),
+            Some(Node::Program(vec![
+                Node::FunctionDefinition(
+                    vec![],
+                    vec![
+                        Node::Call(
+                            Box::new(
+                                Node::Identifier(
+                                    String::from("foo"),
+                                ),
+                            ),
+                            vec![],
+                        ),
+                        Node::Call(
+                            Box::new(
+                                Node::Identifier(
+                                    String::from("bar"),
+                                ),
+                            ),
+                            vec![],
+                        )
+                    ],
                 ),
             ],),)
         );
