@@ -319,21 +319,18 @@ mod tests {
     }
 
     #[test]
+    fn parenthesized_empty() {
+        assert_eq!(parse(vec![Token::OpenParenthesis, Token::CloseParenthesis,]), Some(Node::Program(vec![Node::Parenthesized(Box::new(Node::Empty),),],),));
+    }
+
+    #[test]
     fn parenthesized_addition() {
         assert_eq!(
-            parse(vec![
-                Token::OpenParenthesis,
-                Token::Identifier(String::from("bar")),
-                Token::Plus,
-                Token::Number(String::from("2")),
-                Token::CloseParenthesis,
-            ]),
-            Some(Node::Program(vec![Node::Parenthesized(
-                Box::new(Node::Addition(
-                    Box::new(Node::Identifier(String::from("bar"))),
-                    Box::new(Node::Number(String::from("2"))),
-                )),
-            ),],),)
+            parse(vec![Token::OpenParenthesis, Token::Identifier(String::from("bar")), Token::Plus, Token::Number(String::from("2")), Token::CloseParenthesis,]),
+            Some(Node::Program(vec![Node::Parenthesized(Box::new(Node::Addition(
+                Box::new(Node::Identifier(String::from("bar"))),
+                Box::new(Node::Number(String::from("2"))),
+            )),),],),)
         );
     }
 
@@ -349,52 +346,26 @@ mod tests {
                 Token::Times,
                 Token::Number(String::from("2")),
             ]),
-            Some(Node::Program(vec![
-                Node::Multiplication(
-                    Box::new(
-                        Node::Parenthesized(
-                            Box::new(Node::Addition(
-                                Box::new(Node::Identifier(String::from("bar"))),
-                                Box::new(Node::Number(String::from("2"))),
-                            )),
-                        ),
-                    ),
-                    Box::new(Node::Number(String::from("2"))),
-                ),
-            ],),)
+            Some(Node::Program(vec![Node::Multiplication(
+                Box::new(Node::Parenthesized(Box::new(Node::Addition(Box::new(Node::Identifier(String::from("bar"))), Box::new(Node::Number(String::from("2"))),)),),),
+                Box::new(Node::Number(String::from("2"))),
+            ),],),)
         );
     }
 
     #[test]
     fn function_definition_no_args_no_body() {
         assert_eq!(
-            parse(vec![
-                Token::OpenBrace,
-                Token::CloseBrace,
-            ]),
-            Some(Node::Program(vec![
-                Node::FunctionDefinition(
-                    vec![],
-                    vec![],
-                ),
-            ],),)
+            parse(vec![Token::OpenParenthesis, Token::CloseParenthesis, Token::OpenBrace, Token::CloseBrace,]),
+            Some(Node::Program(vec![Node::FunctionDefinition(vec![], vec![],),],),)
         );
     }
 
     #[test]
     fn function_definition_no_args_no_body_with_linebreak() {
         assert_eq!(
-            parse(vec![
-                Token::OpenBrace,
-                Token::NewLine,
-                Token::CloseBrace,
-            ]),
-            Some(Node::Program(vec![
-                Node::FunctionDefinition(
-                    vec![],
-                    vec![],
-                ),
-            ],),)
+            parse(vec![Token::OpenParenthesis, Token::CloseParenthesis, Token::OpenBrace, Token::NewLine, Token::CloseBrace,]),
+            Some(Node::Program(vec![Node::FunctionDefinition(vec![], vec![],),],),)
         );
     }
 
@@ -402,27 +373,15 @@ mod tests {
     fn function_definition_no_args_single_statement() {
         assert_eq!(
             parse(vec![
+                Token::OpenParenthesis,
+                Token::CloseParenthesis,
                 Token::OpenBrace,
                 Token::Identifier(String::from("foo")),
                 Token::OpenParenthesis,
                 Token::CloseParenthesis,
                 Token::CloseBrace,
             ]),
-            Some(Node::Program(vec![
-                Node::FunctionDefinition(
-                    vec![],
-                    vec![
-                        Node::Call(
-                            Box::new(
-                                Node::Identifier(
-                                    String::from("foo"),
-                                ),
-                            ),
-                            vec![],
-                        )
-                    ],
-                ),
-            ],),)
+            Some(Node::Program(vec![Node::FunctionDefinition(vec![], vec![Node::Call(Box::new(Node::Identifier(String::from("foo"),),), vec![],)],),],),)
         );
     }
 
@@ -430,6 +389,8 @@ mod tests {
     fn function_definition_no_args_single_statement_with_linebreaks() {
         assert_eq!(
             parse(vec![
+                Token::OpenParenthesis,
+                Token::CloseParenthesis,
                 Token::OpenBrace,
                 Token::NewLine,
                 Token::Identifier(String::from("foo")),
@@ -438,21 +399,7 @@ mod tests {
                 Token::NewLine,
                 Token::CloseBrace,
             ]),
-            Some(Node::Program(vec![
-                Node::FunctionDefinition(
-                    vec![],
-                    vec![
-                        Node::Call(
-                            Box::new(
-                                Node::Identifier(
-                                    String::from("foo"),
-                                ),
-                            ),
-                            vec![],
-                        )
-                    ],
-                ),
-            ],),)
+            Some(Node::Program(vec![Node::FunctionDefinition(vec![], vec![Node::Call(Box::new(Node::Identifier(String::from("foo"),),), vec![],)],),],),)
         );
     }
 
@@ -460,6 +407,8 @@ mod tests {
     fn function_definition_no_args_single_statement_with_linebreaks_and_semi_colon() {
         assert_eq!(
             parse(vec![
+                Token::OpenParenthesis,
+                Token::CloseParenthesis,
                 Token::OpenBrace,
                 Token::NewLine,
                 Token::Identifier(String::from("foo")),
@@ -469,21 +418,7 @@ mod tests {
                 Token::NewLine,
                 Token::CloseBrace,
             ]),
-            Some(Node::Program(vec![
-                Node::FunctionDefinition(
-                    vec![],
-                    vec![
-                        Node::Call(
-                            Box::new(
-                                Node::Identifier(
-                                    String::from("foo"),
-                                ),
-                            ),
-                            vec![],
-                        )
-                    ],
-                ),
-            ],),)
+            Some(Node::Program(vec![Node::FunctionDefinition(vec![], vec![Node::Call(Box::new(Node::Identifier(String::from("foo"),),), vec![],)],),],),)
         );
     }
 
@@ -491,6 +426,8 @@ mod tests {
     fn function_definition_no_args_two_statements() {
         assert_eq!(
             parse(vec![
+                Token::OpenParenthesis,
+                Token::CloseParenthesis,
                 Token::OpenBrace,
                 Token::NewLine,
                 Token::Identifier(String::from("foo")),
@@ -503,29 +440,18 @@ mod tests {
                 Token::NewLine,
                 Token::CloseBrace,
             ]),
-            Some(Node::Program(vec![
-                Node::FunctionDefinition(
-                    vec![],
-                    vec![
-                        Node::Call(
-                            Box::new(
-                                Node::Identifier(
-                                    String::from("foo"),
-                                ),
-                            ),
-                            vec![],
-                        ),
-                        Node::Call(
-                            Box::new(
-                                Node::Identifier(
-                                    String::from("bar"),
-                                ),
-                            ),
-                            vec![],
-                        )
-                    ],
-                ),
-            ],),)
+            Some(Node::Program(vec![Node::FunctionDefinition(
+                vec![],
+                vec![Node::Call(Box::new(Node::Identifier(String::from("foo"),),), vec![],), Node::Call(Box::new(Node::Identifier(String::from("bar"),),), vec![],)],
+            ),],),)
+        );
+    }
+
+    #[test]
+    fn function_definition_one_arg() {
+        assert_eq!(
+            parse(vec![Token::OpenParenthesis, Token::Identifier(String::from("foo")), Token::CloseParenthesis, Token::OpenBrace, Token::CloseBrace,]),
+            Some(Node::Program(vec![Node::FunctionDefinition(vec![Node::Identifier(String::from("foo")),], vec![],),],),)
         );
     }
 }

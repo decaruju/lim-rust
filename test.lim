@@ -1,6 +1,7 @@
-foo = {
-  print(2)
+baz = 3
+foo = (bar) {
+  print(bar)
+  print(baz)
 }
 
-print(foo)
-foo()
+foo(4)

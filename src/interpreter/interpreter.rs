@@ -14,9 +14,7 @@ pub fn interpret(ast: Node, scope: &mut HashMap<String, Object>) -> Object {
             }
             rtn
         }
-        Node::Parenthesized(node) => {
-            interpret(*node, scope)
-        }
+        Node::Parenthesized(node) => interpret(*node, scope),
         Node::Addition(lhs, rhs) => add(interpret(*lhs, scope), interpret(*rhs, scope)),
         Node::Multiplication(lhs, rhs) => multiply(interpret(*lhs, scope), interpret(*rhs, scope)),
         Node::Number(number_string) => {
@@ -27,7 +25,7 @@ pub fn interpret(ast: Node, scope: &mut HashMap<String, Object>) -> Object {
             }
         }
         Node::Identifier(literal_string) => scope.get(&literal_string).unwrap_or(natives.get(&literal_string).unwrap_or(&Object::None)).to_owned(),
-        Node::FunctionDefinition(_args, body) => Object::Function(body),
+        Node::FunctionDefinition(args, body) => Object::Function(args, body),
         Node::Call(callee, args) => {
             let mut callee_object = interpret(*callee, scope);
             let mut arg_objects = args.iter().map(|arg| interpret(arg.to_owned(), scope)).collect();
@@ -82,7 +80,8 @@ fn to_string(obj: &Object) -> String {
     match &*obj {
         Object::Integer(number) => format!("{}", number),
         Object::Float(number) => format!("{}", number),
-        Object::Function(_body) => format!("{:?}", obj),
+        Object::None => String::from("None"),
+        Object::Function(_args, _body) => format!("{:?}", obj),
         _ => "".to_string(),
     }
 }
@@ -97,9 +96,22 @@ fn call(callee: &Object, args: Vec<Object>) -> Object {
             }
             Object::None
         }
-        Object::Function(body) => {
+        Object::Function(argument_names, body) => {
             let mut rtn = Object::None;
             let mut scope = HashMap::new();
+
+            for (index, argument_name) in argument_names.iter().enumerate() {
+                if let Node::Identifier(string) = argument_name {
+                    if let Some(arg) = args.get(index) {
+                        scope.insert(string.to_string(), arg.to_owned());
+                    } else {
+                        scope.insert(string.to_string(), Object::None);
+                    }
+                } else {
+                    unreachable!();
+                }
+            }
+
             scope.insert("self".to_string(), callee.clone());
             for node in body.iter() {
                 rtn = interpret(node.to_owned(), &mut scope);

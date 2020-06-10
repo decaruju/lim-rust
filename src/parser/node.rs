@@ -27,7 +27,6 @@ impl Node {
             Token::Identifier(string) => Some(Node::Identifier(string)),
             Token::Number(string) => Some(Node::Number(string)),
             Token::OpenParenthesis => Some(Node::PartialParenthesized(Box::new(Node::Empty))),
-            Token::OpenBrace => Some(Node::PartialFunctionDefinition(vec![], vec![Node::Empty])),
             Token::NewLine | Token::SemiColon => Some(Node::Empty),
             _ => None,
         }
@@ -44,7 +43,7 @@ impl Node {
                 _ => Some(false),
             },
             Node::Parenthesized(_identifier) => match token {
-                Token::Plus | Token::Minus | Token::Times | Token::Division | Token::Period | Token::Modulus | Token::OpenParenthesis => Some(true),
+                Token::Plus | Token::Minus | Token::Times | Token::Division | Token::Period | Token::Modulus | Token::OpenParenthesis | Token::OpenBrace => Some(true),
                 _ => Some(false),
             },
             Node::Addition(_lhs, rhs) => rhs.continues(token),
@@ -86,11 +85,9 @@ impl Node {
                     }
                 }
             },
-            Node::Empty => {
-                match token {
-                    Token::CloseBrace => Some(false),
-                    _ => Some(true),
-                }
+            Node::Empty => match token {
+                Token::CloseBrace | Token::CloseParenthesis => Some(false),
+                _ => Some(true),
             },
             _ => Some(false),
         }
@@ -127,6 +124,13 @@ impl Node {
             },
             Node::Parenthesized(node) => match token {
                 Token::Times => *self = Node::Multiplication(Box::new(self.clone()), Box::new(Node::Empty)),
+                Token::OpenBrace => {
+                    let arguments = match **node {
+                        Node::Empty => vec![],
+                        _ => vec![*node.clone()],
+                    };
+                    *self = Node::PartialFunctionDefinition(arguments, vec![Node::Empty]);
+                }
                 _ => unimplemented!(),
             },
             Node::Addition(_lhs, rhs) => match token {
@@ -169,7 +173,7 @@ impl Node {
                         *self = Node::Parenthesized(node.clone());
                     }
                 }
-            },
+            }
             Node::PartialFunctionDefinition(args, nodes) => {
                 let mut last_node = nodes.last_mut().unwrap();
                 if last_node.continues(&token).unwrap() {
@@ -178,7 +182,7 @@ impl Node {
                     match token {
                         Token::CloseBrace => {
                             if *last_node == Node::Empty {
-                                nodes.remove(nodes.len()-1);
+                                nodes.remove(nodes.len() - 1);
                             }
                             *self = Node::FunctionDefinition(args.to_vec(), nodes.to_vec());
                         }
@@ -188,7 +192,7 @@ impl Node {
                         _ => {}
                     }
                 }
-            },
+            }
             Node::PartialCall(callee, args) => match token {
                 Token::CloseParenthesis => {
                     if let Some(last_arg) = args.last_mut() {
