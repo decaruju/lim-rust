@@ -18,13 +18,37 @@ pub enum Node {
     FunctionArgs(Vec<Node>),
     PartialFunctionDefinition(Vec<Node>, Vec<Node>),
     FunctionDefinition(Vec<Node>, Vec<Node>),
+    UnnamedEnumDefinition,
+    NamedEnumDefinition(Box<Node>),
+    PartialEnumDefinition(Box<Node>, Vec<Node>),
+    EnumDefinition(Box<Node>, Vec<Node>),
+    PartialMatch(Box<Node>, Vec<Node>),
+    UnopenedMatch(Box<Node>),
+    UnopenedMatchArm(Box<Node>),
+    MatchArmWithoutColon(Box<Node>),
+    PartialMatchArm(Box<Node>, Box<Node>),
+    MatchArm(Box<Node>, Box<Node>),
+    Match(Box<Node>, Vec<Node>),
     Empty,
 }
 
 impl Node {
+    pub fn is_a(&self, node: Node) -> bool {
+        match self {
+            node => true,
+            _ =>  false
+        }
+    }
+
     pub fn start_of(token: Token) -> Option<Node> {
         match token {
-            Token::Identifier(string) => Some(Node::Identifier(string)),
+            Token::Identifier(string) => {
+                if string == String::from("enum") {
+                    Some(Node::UnnamedEnumDefinition)
+                } else {
+                    Some(Node::Identifier(string))
+                }
+            },
             Token::Number(string) => Some(Node::Number(string)),
             Token::OpenParenthesis => Some(Node::PartialParenthesized(Box::new(Node::Empty))),
             Token::NewLine | Token::SemiColon => Some(Node::Empty),
@@ -34,8 +58,36 @@ impl Node {
 
     pub fn continues(&self, token: &Token) -> Option<bool> {
         match self {
+            Node::Program(nodes) => {
+                if let Some(last_node) = nodes.last() {
+                    last_node.continues(token)
+                } else {
+                    match token {
+                        Token::Identifier(_) => Some(true),
+                        _ => Some(false),
+                    }
+                }
+            }
+            Node::UnnamedEnumDefinition => match token {
+                Token::Identifier(_) => Some(true),
+                _ => panic!("{:?}", token),
+            }
+            Node::NamedEnumDefinition(_) => match token {
+                Token::OpenBrace => Some(true),
+                _ => panic!("{:?}", token),
+            }
+            Node::PartialEnumDefinition(_, _) => match token {
+                Token::CloseBrace => Some(true),
+                Token::Identifier(_) => Some(true),
+                Token::NewLine => Some(true),
+                _ => panic!("{:?}", token),
+            }
+            Node::UnopenedMatch(node) => match token {
+                Token::OpenBrace => Some(true),
+                _ => panic!("{:?}", token),
+            }
             Node::Identifier(_identifier) => match token {
-                Token::Equal | Token::Plus | Token::Minus | Token::Times | Token::Division | Token::Period | Token::Modulus | Token::OpenParenthesis => Some(true),
+                Token::Equal | Token::Plus | Token::Minus | Token::Times | Token::Division | Token::Period | Token::Modulus | Token::OpenParenthesis | Token::Colon => Some(true),
                 _ => Some(false),
             },
             Node::Number(_identifier) => match token {
@@ -46,6 +98,39 @@ impl Node {
                 Token::Plus | Token::Minus | Token::Times | Token::Division | Token::Period | Token::Modulus | Token::OpenParenthesis | Token::OpenBrace => Some(true),
                 _ => Some(false),
             },
+            Node::PartialMatch(_matched, arms) => {
+                if let Token::NewLine = token {
+                    return Some(true)
+                }
+                let last_arm = arms.last();
+                if let Some(Node::PartialMatchArm(matcher, nodes)) = last_arm {
+                    if nodes.continues(token).unwrap() {
+                        Some(true)
+                    } else {
+                        match token {
+                            Token::CloseBrace => Some(true),
+                            _ => Some(false),
+                        }
+                    }
+                } else {
+                    match token {
+                        Token::Identifier(_) | Token::CloseBrace | Token::Colon | Token::OpenBrace => Some(true),
+                        _ => panic!("{:?}", token),
+                    }
+                }
+            }
+            Node::PartialMatchArm(matcher, program) => {
+                if let Some(true) = program.continues(token) {
+                    Some(true)
+                } else {
+                    match token {
+                        Token::CloseBrace => {
+                            Some(true)
+                        }
+                        _ => panic!("Cant add token {:?} to node {:?}", token, self)
+                    }
+                }
+            }
             Node::Addition(_lhs, rhs) => rhs.continues(token),
             Node::Substraction(_lhs, rhs) => rhs.continues(token),
             Node::Multiplication(_lhs, rhs) => rhs.continues(token),
@@ -120,6 +205,9 @@ impl Node {
                 Token::Period => {
                     unimplemented!();
                 }
+                Token::Colon => {
+                    *self = Node::UnopenedMatch(Box::new(self.clone()));
+                }
                 _ => {}
             },
             Node::Parenthesized(node) => match token {
@@ -193,6 +281,27 @@ impl Node {
                     }
                 }
             }
+            Node::UnnamedEnumDefinition => match token {
+                Token::Identifier(string) => {
+                    *self = Node::NamedEnumDefinition(Box::new(Node::Identifier(string)));
+                }
+                _ => {}
+            }
+            Node::NamedEnumDefinition(name) => match token {
+                Token::OpenBrace => {
+                    *self = Node::PartialEnumDefinition(name.clone(), vec![]);
+                }
+                _ => {}
+            }
+            Node::PartialEnumDefinition(name, variations) => match token {
+                Token::CloseBrace => {
+                    *self = Node::EnumDefinition(name.clone(), variations.to_vec());
+                }
+                Token::Identifier(string) => {
+                    variations.push(Node::Identifier(string))
+                }
+                _ => {}
+            }
             Node::PartialCall(callee, args) => match token {
                 Token::CloseParenthesis => {
                     if let Some(last_arg) = args.last_mut() {
@@ -234,6 +343,77 @@ impl Node {
             }
             Node::Empty => {
                 *self = Node::start_of(token).unwrap();
+            }
+
+            Node::UnopenedMatch(node) => {
+                *self = Node::PartialMatch(node.clone(), vec![]);
+            }
+
+            Node::Program(nodes) => {
+                if let Some(last_node) = nodes.last_mut() {
+                    if last_node.continues(&token).unwrap() {
+                        last_node.append(token)
+                    } else {
+                        nodes.push(Node::start_of(token).unwrap())
+                    }
+                } else {
+                    nodes.push(Node::start_of(token).unwrap())
+                }
+            }
+
+            Node::PartialMatch(node, arms) => {
+                if let Some(last_arm) = arms.last_mut() {
+                    match last_arm {
+                        Node::PartialMatchArm(matcher, nodes) => {
+                            if nodes.continues(&token).unwrap() {
+                                nodes.append(token);
+                            } else {
+                                match token {
+                                    Token::CloseBrace =>  {
+                                        *last_arm = Node::MatchArm(matcher.to_owned(), nodes.to_owned());
+                                    }
+                                    _ => {}
+                                }
+                            }
+                        }
+                        Node::MatchArmWithoutColon(matcher) => {
+                            if let Token::Colon = token {
+                                *last_arm = Node::UnopenedMatchArm(matcher.to_owned());
+                            } else {
+                                unreachable!();
+                            }
+                        }
+                        Node::UnopenedMatchArm(matcher) => {
+                            if let Token::OpenBrace = token {
+                                *last_arm = Node::PartialMatchArm(matcher.to_owned(), Box::new(Node::Program(vec![])));
+                            } else {
+                                unreachable!();
+                            }
+                        }
+                        Node::MatchArm(_matcher, _nodes) => {
+                            match token {
+                                Token::CloseBrace => {
+                                    *self = Node::Match(node.clone(), arms.to_vec());
+                                }
+                                Token::Identifier(string) => {
+                                    arms.push(Node::MatchArmWithoutColon(Box::new(Node::Identifier(string))))
+                                }
+                                _ => {}
+                            }
+                        }
+                        _ => {}
+                    }
+                } else {
+                    match token {
+                        Token::CloseBrace => {
+                            *self = Node::Match(node.clone(), arms.to_vec());
+                        }
+                        Token::Identifier(string) => {
+                            arms.push(Node::MatchArmWithoutColon(Box::new(Node::Identifier(string))));
+                        }
+                        _ => {}
+                    }
+                }
             }
             _ => {}
         }

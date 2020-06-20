@@ -1,7 +1,6 @@
-baz = 3
-foo = (bar) {
-  print(bar)
-  print(baz)
+enum Foo {
+    Bar
+    Baz
 }
 
-foo(4)
+print(Foo)

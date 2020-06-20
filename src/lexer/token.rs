@@ -10,6 +10,7 @@ pub enum Token {
     Division,
     Modulus,
     Comma,
+    Colon,
     Period,
     SemiColon,
     NewLine,
@@ -37,6 +38,8 @@ impl Token {
             Some(Token::Modulus)
         } else if character == ',' {
             Some(Token::Comma)
+        } else if character == ':' {
+            Some(Token::Colon)
         } else if character == '.' {
             Some(Token::Period)
         } else if character == ';' {

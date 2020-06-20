@@ -15,6 +15,12 @@ pub fn interpret(ast: Node, scope: &mut HashMap<String, Object>) -> Object {
             rtn
         }
         Node::Parenthesized(node) => interpret(*node, scope),
+        Node::EnumDefinition(name, variations) => {
+            if let Node::Identifier(name) = *name {
+                scope.insert(name.clone(), Object::Enum(name.clone(), variations));
+            }
+            Object::None
+        },
         Node::Addition(lhs, rhs) => add(interpret(*lhs, scope), interpret(*rhs, scope)),
         Node::Multiplication(lhs, rhs) => multiply(interpret(*lhs, scope), interpret(*rhs, scope)),
         Node::Number(number_string) => {
@@ -80,6 +86,7 @@ fn to_string(obj: &Object) -> String {
     match &*obj {
         Object::Integer(number) => format!("{}", number),
         Object::Float(number) => format!("{}", number),
+        Object::Enum(name, variations) => format!("enum {:?}, variations {:?}", name, variations),
         Object::None => String::from("None"),
         Object::Function(_args, _body) => format!("{:?}", obj),
         _ => "".to_string(),

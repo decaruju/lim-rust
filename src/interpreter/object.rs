@@ -7,5 +7,6 @@ pub enum Object {
     Float(f64),
     String(String),
     Native(String),
+    Enum(String, Vec<Node>),
     Function(Vec<Node>, Vec<Node>),
 }
