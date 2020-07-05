@@ -1,3 +1,5 @@
+#![feature(get_mut_unchecked)]
+
 use std::collections::HashMap;
 use std::fs::File;
 use std::io::prelude::*;
@@ -9,9 +11,10 @@ mod parser;
 use interpreter::interpreter::interpret;
 use lexer::lexer::lex;
 use parser::parser::parse;
+use std::rc::Rc;
 
 fn run(string: &str) -> interpreter::object::Object {
-    interpret(parse(lex(string).unwrap()).unwrap(), &mut HashMap::new())
+    (*Rc::clone(&interpret(parse(lex(string).unwrap()).unwrap(), &mut HashMap::new()))).clone()
 }
 
 fn lex_parse(string: &str) -> parser::node::Node {

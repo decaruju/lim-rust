@@ -1,11 +1,14 @@
 class Foo {
-  bar = 4
-
-  $string = () {
-    self.bar
+  field = 1
+  bar = () {
+    self.field = 2
+  }
+  self.bim = () {
+    print("this is a static method")
   }
 }
 
 foo = Foo()
-
-print(foo.$string())
+print(foo.field)
+foo.bar()
+print(foo.field)

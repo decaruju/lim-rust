@@ -71,6 +71,7 @@ impl Node {
             Node::Member(node, string) => {
                 match token {
                     Token::OpenParenthesis => Some(true),
+                    Token::Equal => Some(true),
                     _ => Some(false),
                 }
             }
@@ -480,6 +481,9 @@ impl Node {
                 match token {
                     Token::OpenParenthesis => {
                         *self = Node::PartialCall(Box::new(self.to_owned()), vec![]);
+                    }
+                    Token::Equal => {
+                        *self = Node::Assignment(Box::new(self.clone()), Box::new(Node::Empty));
                     }
                     _ => unimplemented!(),
                 }

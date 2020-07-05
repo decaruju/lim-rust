@@ -568,6 +568,37 @@ mod tests {
     }
 
     #[test]
+    fn class_definition_with_static_method() {
+        assert_eq!(
+            parse(vec![Token::Identifier(String::from("class")), Token::Identifier(String::from("foo")), Token::OpenBrace, Token::NewLine, Token::Identifier(String::from("self")), Token::Period, Token::Identifier(String::from("field1")), Token::Equal, Token::OpenParenthesis, Token::CloseParenthesis, Token::OpenBrace, Token::NewLine, Token::Identifier(String::from("None")), Token::NewLine, Token::CloseBrace, Token::NewLine, Token::CloseBrace,]),
+            Some(Node::Program(vec![Node::ClassDefinition(Box::new(Node::Identifier(String::from("foo"))), Box::new(Node::Program(vec![
+                Node::Assignment(
+                    Box::new(
+                        Node::Member(
+                            Box::new(
+                                Node::Identifier(
+                                    String::from("self")
+                                )
+                            ),
+                            String::from("field1")
+                        ),
+                    ),
+                    Box::new(
+                        Node::FunctionDefinition(
+                            vec![],
+                            vec![
+                                Node::Identifier(
+                                    String::from("None")
+                                )
+                            ],
+                        ),
+                    ),
+                ),
+            ]),))])),
+        );
+    }
+
+    #[test]
     fn enum_with_variations() {
         assert_eq!(
             parse(vec![

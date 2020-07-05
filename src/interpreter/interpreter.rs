@@ -2,20 +2,20 @@ use std::collections::HashMap;
 
 use super::object::Object;
 use crate::parser::node::Node;
+use std::rc::Rc;
 
-pub fn interpret(ast: Node, scope: &mut HashMap<String, Object>) -> Object {
-    let mut natives: HashMap<String, Object> = HashMap::new();
-    natives.insert(String::from("print"), Object::Native(String::from("print")));
+pub fn interpret(ast: Node, scope: &mut HashMap<String, Rc<Object>>) -> Rc<Object> {
+    let mut natives: HashMap<String, Rc<Object>> = HashMap::new();
+    natives.insert(String::from("print"), Rc::new(Object::Native(String::from("print"))));
     match ast {
         Node::Member(node, string) => get(&interpret(*node, scope), string),
         Node::Program(nodes) => {
-            let mut rtn = Object::None;
             for node in nodes {
-                rtn = interpret(node, scope);
+                interpret(node, scope);
             }
-            rtn
+            Rc::new(Object::None)
         }
-        Node::Literal(string, _delimiter) => Object::String(string),
+        Node::Literal(string, _delimiter) => Rc::new(Object::String(string)),
         Node::Match(matched, match_arms) => {
             let matched = interpret(*matched, scope);
             for arm in match_arms.iter() {
@@ -25,82 +25,111 @@ pub fn interpret(ast: Node, scope: &mut HashMap<String, Object>) -> Object {
                     }
                 }
             }
-            Object::None
+            Rc::new(Object::None)
         }
         Node::Parenthesized(node) => interpret(*node, scope),
         Node::EnumDefinition(name, variations) => {
             if let Node::Identifier(name) = *name {
-                scope.insert(name.clone(), Object::Enum(name.clone(), variations));
+                scope.insert(name.clone(), Rc::new(Object::Enum(name.clone(), variations)));
             }
-            Object::None
+            Rc::new(Object::None)
         }
         Node::ClassDefinition(name, body) => {
             if let Node::Identifier(name) = *name {
                 let mut fields = HashMap::new();
+                fields.insert(String::from("self"), Rc::new(Object::Instance(HashMap::new())));
                 interpret(*body, &mut fields);
                 let mut prototype_fields = HashMap::new();
                 let mut class_fields = HashMap::new();
                 for (var_name, object) in fields.iter_mut() {
                     if var_name == "self" {
-                        prototype_fields.insert(String::from("$class"), Box::new(object.clone()));
+                        prototype_fields.insert(String::from("$class"), object.clone());
                     } else {
-                        prototype_fields.insert(var_name.to_owned(), Box::new(object.clone()));
+                        prototype_fields.insert(var_name.to_owned(), object.clone());
                     }
                 }
-                class_fields.insert(String::from("$prototype"), Box::new(Object::Instance(prototype_fields)));
+                class_fields.insert(String::from("$prototype"), Rc::new(Object::Instance(prototype_fields.clone())));
+                if let Object::Instance(self_fields) = &**fields.get("self").unwrap() {
+                    for (var_name, object) in self_fields.iter() {
+                        class_fields.insert(var_name.to_owned(), object.clone());
+                    }
+                }
 
-                scope.insert(name.clone(), Object::Class(class_fields));
+                scope.insert(name.clone(), Rc::new(Object::Class(class_fields)));
             }
-            Object::None
+            Rc::new(Object::None)
         }
         Node::Addition(lhs, rhs) => add(interpret(*lhs, scope), interpret(*rhs, scope)),
         Node::Multiplication(lhs, rhs) => multiply(interpret(*lhs, scope), interpret(*rhs, scope)),
         Node::Number(number_string) => {
             if number_string.contains('.') {
-                Object::Float(number_string.parse::<f64>().unwrap())
+                Rc::new(Object::Float(number_string.parse::<f64>().unwrap()))
             } else {
-                Object::Integer(number_string.parse::<i64>().unwrap())
+                Rc::new(Object::Integer(number_string.parse::<i64>().unwrap()))
             }
         }
-        Node::Identifier(literal_string) => scope.get(&literal_string).unwrap_or(natives.get(&literal_string).unwrap_or(&Object::None)).to_owned(),
-        Node::FunctionDefinition(args, body) => Object::Function(args, body),
+        Node::Identifier(literal_string) => scope.get(&literal_string).unwrap_or(natives.get(&literal_string).unwrap_or(&Rc::new(Object::None))).to_owned(),
+        Node::FunctionDefinition(args, body) => Rc::new(Object::Function(args, body)),
         Node::Call(callee, args) => {
             let mut callee_object = interpret(*callee, scope);
-            let mut arg_objects = args.iter().map(|arg| interpret(arg.to_owned(), scope)).collect();
-            call(&callee_object, arg_objects, &callee_object)
+            let mut arg_objects = vec![];
+            for arg in args.iter() {
+                arg_objects.push(interpret(arg.to_owned(), scope))
+            }
+            call(&callee_object, &arg_objects, &callee_object)
         }
         Node::Assignment(lhs, rhs) => {
-            if let Node::Identifier(variable_name) = *lhs {
-                let value = interpret(*rhs, scope);
-                scope.insert(variable_name, value);
-                Object::None
-            } else {
-                Object::None
+            match *lhs {
+                Node::Identifier(variable_name) => {
+                    let value = interpret(*rhs, scope);
+                    scope.insert(variable_name, value);
+                    Rc::new(Object::None)
+                }
+                Node::Member(instance, field_name) => {
+                    let mut instance = interpret(*instance, scope);
+                    let value = interpret(*rhs, scope);
+                    let mut instance = unsafe {
+                        Rc::get_mut_unchecked(&mut instance)
+                    };
+                    match instance {
+                        Object::Class(class_fields) => {
+                            class_fields.insert(field_name, value);
+                        }
+                        Object::Instance(instance_fields) => {
+                            instance_fields.insert(field_name, value);
+                        }
+                        _ => {
+                            unimplemented!("member assignment on {:?}", instance);
+                        }
+                    }
+                    Rc::new(Object::None)
+                }
+                _ => unimplemented!("assigment on {:?}", lhs),
             }
         }
-        _ => Object::None,
+        _ => Rc::new(Object::None),
     }
 }
 
-fn add(lhs: Object, rhs: Object) -> Object {
-    match lhs {
-        Object::Integer(lhs_value) => match rhs {
-            Object::Integer(rhs_value) => Object::Integer(lhs_value + rhs_value),
-            Object::Float(rhs_value) => Object::Float(lhs_value as f64 + rhs_value),
-            _ => Object::None,
+fn add(lhs: Rc<Object>, rhs: Rc<Object>) -> Rc<Object> {
+    match &*lhs {
+        Object::Integer(lhs_value) => match *rhs {
+            Object::Integer(rhs_value) => Rc::new(Object::Integer(lhs_value + rhs_value)),
+            Object::Float(rhs_value) => Rc::new(Object::Float(*lhs_value as f64 + rhs_value)),
+            _ => Rc::new(Object::None),
         },
-        Object::Float(lhs_value) => match rhs {
-            Object::Integer(rhs_value) => Object::Float(lhs_value + rhs_value as f64),
-            Object::Float(rhs_value) => Object::Float(lhs_value + rhs_value),
-            _ => Object::None,
+        Object::Float(lhs_value) => match *rhs {
+            Object::Integer(rhs_value) => Rc::new(Object::Float(lhs_value + rhs_value as f64)),
+            Object::Float(rhs_value) => Rc::new(Object::Float(lhs_value + rhs_value)),
+            _ => Rc::new(Object::None),
         },
-        _ => Object::None,
+        _ => Rc::new(Object::None),
     }
 }
 
-fn eq(lhs: &Object, rhs: &Object) -> bool {
-    match lhs {
-        Object::EnumVariant(string_lhs) => match rhs {
+fn eq(lhs: &Rc<Object>, rhs: &Rc<Object>) -> bool {
+    match &**lhs {
+        Object::EnumVariant(string_lhs) => match &**rhs {
             Object::EnumVariant(string_rhs) => string_lhs == string_rhs,
             _ => false,
         },
@@ -108,24 +137,24 @@ fn eq(lhs: &Object, rhs: &Object) -> bool {
     }
 }
 
-fn multiply(lhs: Object, rhs: Object) -> Object {
-    match lhs {
-        Object::Integer(lhs_value) => match rhs {
-            Object::Integer(rhs_value) => Object::Integer(lhs_value * rhs_value),
-            Object::Float(rhs_value) => Object::Float(lhs_value as f64 * rhs_value),
-            _ => Object::None,
+fn multiply(lhs: Rc<Object>, rhs: Rc<Object>) -> Rc<Object> {
+    match *lhs {
+        Object::Integer(lhs_value) => match *rhs {
+            Object::Integer(rhs_value) => Rc::new(Object::Integer(lhs_value * rhs_value)),
+            Object::Float(rhs_value) => Rc::new(Object::Float(lhs_value as f64 * rhs_value)),
+            _ => Rc::new(Object::None),
         },
-        Object::Float(lhs_value) => match rhs {
-            Object::Integer(rhs_value) => Object::Float(lhs_value * rhs_value as f64),
-            Object::Float(rhs_value) => Object::Float(lhs_value * rhs_value),
-            _ => Object::None,
+        Object::Float(lhs_value) => match *rhs {
+            Object::Integer(rhs_value) => Rc::new(Object::Float(lhs_value * rhs_value as f64)),
+            Object::Float(rhs_value) => Rc::new(Object::Float(lhs_value * rhs_value)),
+            _ => Rc::new(Object::None),
         },
-        _ => Object::None,
+        _ => Rc::new(Object::None),
     }
 }
 
-fn to_string(obj: &Object) -> String {
-    match &*obj {
+fn to_string(obj: &Rc<Object>) -> String {
+    match &**obj {
         Object::Integer(number) => format!("{}", number),
         Object::String(string) => format!("{}", string),
         Object::Float(number) => format!("{}", number),
@@ -136,33 +165,41 @@ fn to_string(obj: &Object) -> String {
     }
 }
 
-fn get(obj: &Object, string: String) -> Object {
-    match obj {
+fn get(obj: &Rc<Object>, string: String) -> Rc<Object> {
+    match &**obj {
         Object::Enum(name, variants) => {
             for variant in variants.iter() {
                 if let Node::Identifier(variant_name) = variant {
                     if *variant_name == string {
-                        return Object::EnumVariant(format!("{}.{}", name, variant_name));
+                        return Rc::new(Object::EnumVariant(format!("{}.{}", name, variant_name)));
                     }
                 } else {
                     unimplemented!();
                 }
             }
-            Object::Error(format!("Variant {} does not exist for enum {}", string, name))
+            Rc::new(Object::Error(format!("Variant {} does not exist for enum {}", string, name)))
         }
         Object::Instance(fields) => {
-            let field = *fields.get(&string).unwrap().to_owned();
-            if let Object::Function(_, _) = field {
-                Object::BoundFunction(Box::new(obj.to_owned()), Box::new(field))
+            let field = fields.get(&string).unwrap().to_owned();
+            if let Object::Function(_, _) = *field {
+                Rc::new(Object::BoundFunction(obj.to_owned(), field))
             } else {
                 field
             }
         }
-        _ => unimplemented!(),
+        Object::Class(fields) => {
+            let field = fields.get(&string).unwrap().to_owned();
+            if let Object::Function(_, _) = *field {
+                Rc::new(Object::BoundFunction(obj.to_owned(), field))
+            } else {
+                field
+            }
+        }
+        _ => unimplemented!("cannot get {:?} on {:?}", string, obj),
     }
 }
 
-fn call(callee: &Object, args: Vec<Object>, instance: &Object) -> Object {
+fn call(callee: &Object, args: &Vec<Rc<Object>>, instance: &Rc<Object>) -> Rc<Object> {
     match callee {
         Object::Native(identifier) => {
             if identifier == "print" {
@@ -170,13 +207,13 @@ fn call(callee: &Object, args: Vec<Object>, instance: &Object) -> Object {
                     println!("{}", to_string(&arg));
                 }
             }
-            Object::None
+            Rc::new(Object::None)
         }
         Object::Class(fields) => {
-            *fields.get("$prototype").unwrap().clone()
+            fields.get("$prototype").unwrap().to_owned()
         }
         Object::Function(argument_names, body) => {
-            let mut rtn = Object::None;
+            let mut rtn = Rc::new(Object::None);
             let mut scope = HashMap::new();
 
             for (index, argument_name) in argument_names.iter().enumerate() {
@@ -184,7 +221,7 @@ fn call(callee: &Object, args: Vec<Object>, instance: &Object) -> Object {
                     if let Some(arg) = args.get(index) {
                         scope.insert(string.to_string(), arg.to_owned());
                     } else {
-                        scope.insert(string.to_string(), Object::None);
+                        scope.insert(string.to_string(), Rc::new(Object::None));
                     }
                 } else {
                     unreachable!();
@@ -198,7 +235,7 @@ fn call(callee: &Object, args: Vec<Object>, instance: &Object) -> Object {
             rtn
         }
         Object::BoundFunction(instance, function) => {
-            call(function, args, &**instance)
+            call(function, args, instance)
         }
         _ => unimplemented!(),
     }

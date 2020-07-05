@@ -1,5 +1,6 @@
 use crate::parser::node::Node;
 use std::collections::HashMap;
+use std::rc::Rc;
 
 #[derive(Debug, Clone)]
 pub enum Object {
@@ -12,7 +13,7 @@ pub enum Object {
     Enum(String, Vec<Node>),
     EnumVariant(String),
     Function(Vec<Node>, Vec<Node>),
-    BoundFunction(Box<Object>, Box<Object>),
-    Class(HashMap<String, Box<Object>>),
-    Instance(HashMap<String, Box<Object>>),
+    BoundFunction(Rc<Object>, Rc<Object>),
+    Class(HashMap<String, Rc<Object>>),
+    Instance(HashMap<String, Rc<Object>>),
 }
