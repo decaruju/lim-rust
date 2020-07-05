@@ -62,7 +62,7 @@ impl Token {
             Some(Token::Literal(character.to_string(), character))
         } else if character.is_digit(10) {
             Some(Token::Number(character.to_string()))
-        } else if character.is_alphabetic() || character == '_' {
+        } else if character.is_alphabetic() || character == '_' || character == '$' {
             Some(Token::Identifier(character.to_string()))
         } else {
             None

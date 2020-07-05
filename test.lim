@@ -1,6 +1,11 @@
-enum Foo {
-    Bar
-    Baz
+class Foo {
+  bar = 4
+
+  $string = () {
+    self.bar
+  }
 }
 
-print(Foo)
+foo = Foo()
+
+print(foo.$string())

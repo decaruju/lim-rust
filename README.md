@@ -38,3 +38,6 @@ class and enum definition syntax
 5. How extensible it is
 6. How fast it is
 6. How safe it is
+
+# Examples
+See the example folder for more examples

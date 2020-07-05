@@ -28,6 +28,31 @@ mod tests {
     }
 
     #[test]
+    fn member_on_literal() {
+        assert_eq!(
+            parse(vec![Token::Identifier(String::from("foo")), Token::Period, Token::Identifier(String::from("bar")),]),
+            Some(Node::Program(vec![Node::Member(Box::new(Node::Identifier(String::from("foo"),),), String::from("bar"))])),
+        );
+    }
+
+    #[test]
+    fn assignment_of_member_on_literal() {
+        assert_eq!(
+            parse(vec![
+                Token::Identifier(String::from("foo")),
+                Token::Equal,
+                Token::Identifier(String::from("baz")),
+                Token::Period,
+                Token::Identifier(String::from("bar")),
+            ]),
+            Some(Node::Program(vec![Node::Assignment(
+                Box::new(Node::Identifier(String::from("foo"))),
+                Box::new(Node::Member(Box::new(Node::Identifier(String::from("baz"),),), String::from("bar")))
+            )])),
+        );
+    }
+
+    #[test]
     fn float_assignation() {
         assert_eq!(
             parse(vec![Token::Identifier(String::from("x")), Token::Equal, Token::Number(String::from("4.0")),]),
@@ -319,6 +344,30 @@ mod tests {
     }
 
     #[test]
+    fn method_call() {
+        assert_eq!(
+            parse(vec![
+                Token::Identifier(String::from("foo")),
+                Token::Period,
+                Token::Identifier(String::from("bar")),
+                Token::OpenParenthesis,
+                Token::CloseParenthesis,
+            ]),
+            Some(Node::Program(vec![Node::Call(
+                Box::new(Node::Member(
+                    Box::new(
+                        Node::Identifier(
+                            String::from("foo"),
+                        ),
+                    ),
+                    String::from("bar"),
+                )),
+                vec![]
+            ),],),)
+        );
+    }
+
+    #[test]
     fn parenthesized_empty() {
         assert_eq!(parse(vec![Token::OpenParenthesis, Token::CloseParenthesis,]), Some(Node::Program(vec![Node::Parenthesized(Box::new(Node::Empty),),],),));
     }
@@ -458,16 +507,63 @@ mod tests {
     #[test]
     fn enum_definition() {
         assert_eq!(
-            parse(vec![
-                Token::Identifier(String::from("enum")),
-                Token::Identifier(String::from("foo")),
-                Token::OpenBrace,
-                Token::CloseBrace,
-            ]),
-            Some(Node::Program(vec![Node::EnumDefinition(
-                Box::new(Node::Identifier(String::from("foo"))),
-                vec![],
-            )])),
+            parse(vec![Token::Identifier(String::from("enum")), Token::Identifier(String::from("foo")), Token::OpenBrace, Token::CloseBrace,]),
+            Some(Node::Program(vec![Node::EnumDefinition(Box::new(Node::Identifier(String::from("foo"))), vec![],)])),
+        );
+    }
+
+    #[test]
+    fn class_definition() {
+        assert_eq!(
+            parse(vec![Token::Identifier(String::from("class")), Token::Identifier(String::from("foo")), Token::OpenBrace, Token::CloseBrace,]),
+            Some(Node::Program(vec![Node::ClassDefinition(Box::new(Node::Identifier(String::from("foo"))), Box::new(Node::Program(vec![])),)])),
+        );
+    }
+
+    #[test]
+    fn class_definition_with_single_field() {
+        assert_eq!(
+            parse(vec![Token::Identifier(String::from("class")), Token::Identifier(String::from("foo")), Token::OpenBrace, Token::NewLine, Token::Identifier(String::from("field1")), Token::Equal, Token::Identifier(String::from("None")), Token::NewLine, Token::CloseBrace,]),
+            Some(Node::Program(vec![Node::ClassDefinition(Box::new(Node::Identifier(String::from("foo"))), Box::new(Node::Program(vec![
+                Node::Assignment(
+                    Box::new(
+                        Node::Identifier(
+                            String::from("field1")
+                        )
+                    ),
+                    Box::new(
+                        Node::Identifier(
+                            String::from("None")
+                        )
+                    )
+                )
+            ]),))])),
+        );
+    }
+
+    #[test]
+    fn class_definition_with_method() {
+        assert_eq!(
+            parse(vec![Token::Identifier(String::from("class")), Token::Identifier(String::from("foo")), Token::OpenBrace, Token::NewLine, Token::Identifier(String::from("field1")), Token::Equal, Token::OpenParenthesis, Token::CloseParenthesis, Token::OpenBrace, Token::NewLine, Token::Identifier(String::from("None")), Token::NewLine, Token::CloseBrace, Token::NewLine, Token::CloseBrace,]),
+            Some(Node::Program(vec![Node::ClassDefinition(Box::new(Node::Identifier(String::from("foo"))), Box::new(Node::Program(vec![
+                Node::Assignment(
+                    Box::new(
+                        Node::Identifier(
+                            String::from("field1")
+                        )
+                    ),
+                    Box::new(
+                        Node::FunctionDefinition(
+                            vec![],
+                            vec![
+                                Node::Identifier(
+                                    String::from("None")
+                                )
+                            ],
+                        ),
+                    ),
+                ),
+            ]),))])),
         );
     }
 
@@ -485,10 +581,7 @@ mod tests {
             ]),
             Some(Node::Program(vec![Node::EnumDefinition(
                 Box::new(Node::Identifier(String::from("foo"))),
-                vec![
-                    Node::Identifier(String::from("bar")),
-                    Node::Identifier(String::from("baz")),
-                ],
+                vec![Node::Identifier(String::from("bar")), Node::Identifier(String::from("baz")),],
             )])),
         );
     }
@@ -496,17 +589,8 @@ mod tests {
     #[test]
     fn pattern_matching_with_no_arms() {
         assert_eq!(
-            parse(vec![
-                Token::Identifier(String::from("foo")),
-                Token::Colon,
-                Token::OpenBrace,
-                Token::CloseBrace,
-            ]),
-            Some(Node::Program(vec![
-                Node::Match(
-                    Box::new(Node::Identifier(String::from("foo"))),
-                    vec![],
-            )])),
+            parse(vec![Token::Identifier(String::from("foo")), Token::Colon, Token::OpenBrace, Token::CloseBrace,]),
+            Some(Node::Program(vec![Node::Match(Box::new(Node::Identifier(String::from("foo"))), vec![],)])),
         );
     }
 
@@ -524,25 +608,12 @@ mod tests {
                 Token::NewLine,
                 Token::CloseBrace,
             ]),
-            Some(Node::Program(vec![
-                Node::Match(
-                    Box::new(Node::Identifier(String::from("foo"))),
-                    vec![
-                        Node::MatchArm(
-                            Box::new(
-                                Node::Identifier(String::from("bar")),
-                            ),
-                            Box::new(
-                                Node::Program(
-                                    vec![]
-                                )
-                            )
-                        )
-                    ],
+            Some(Node::Program(vec![Node::Match(
+                Box::new(Node::Identifier(String::from("foo"))),
+                vec![Node::MatchArm(Box::new(Node::Identifier(String::from("bar")),), Box::new(Node::Program(vec![])))],
             )])),
         );
     }
-
 
     #[test]
     fn pattern_matching_with_one_arm() {
@@ -562,26 +633,42 @@ mod tests {
                 Token::NewLine,
                 Token::CloseBrace,
             ]),
-            Some(Node::Program(vec![
-                Node::Match(
-                    Box::new(Node::Identifier(String::from("foo"))),
-                    vec![
-                        Node::MatchArm(
-                            Box::new(
-                                Node::Identifier(String::from("bar")),
-                            ),
-                            Box::new(
-                                Node::Program(
-                                    vec![
-                                        Node::Call(
-                                            Box::new(Node::Identifier(String::from("bar"))),
-                                            vec![],
-                                        )
-                                    ]
-                                )
-                            )
-                        )
-                    ],
+            Some(Node::Program(vec![Node::Match(
+                Box::new(Node::Identifier(String::from("foo"))),
+                vec![Node::MatchArm(
+                    Box::new(Node::Identifier(String::from("bar")),),
+                    Box::new(Node::Program(vec![Node::Call(Box::new(Node::Identifier(String::from("bar"))), vec![],)]))
+                )],
+            )])),
+        );
+    }
+
+    #[test]
+    fn pattern_matching_with_one_arm_with_enum_variant() {
+        assert_eq!(
+            parse(vec![
+                Token::Identifier(String::from("foo")),
+                Token::Colon,
+                Token::OpenBrace,
+                Token::Identifier(String::from("bar")),
+                Token::Period,
+                Token::Identifier(String::from("bim")),
+                Token::Colon,
+                Token::OpenBrace,
+                Token::NewLine,
+                Token::Identifier(String::from("bar")),
+                Token::OpenParenthesis,
+                Token::CloseParenthesis,
+                Token::CloseBrace,
+                Token::NewLine,
+                Token::CloseBrace,
+            ]),
+            Some(Node::Program(vec![Node::Match(
+                Box::new(Node::Identifier(String::from("foo"))),
+                vec![Node::MatchArm(
+                    Box::new(Node::Member(Box::new(Node::Identifier(String::from("bar"),),), String::from("bim"),),),
+                    Box::new(Node::Program(vec![Node::Call(Box::new(Node::Identifier(String::from("bar"))), vec![],)]))
+                )],
             )])),
         );
     }
@@ -613,41 +700,18 @@ mod tests {
                 Token::NewLine,
                 Token::CloseBrace,
             ]),
-            Some(Node::Program(vec![
-                Node::Match(
-                    Box::new(Node::Identifier(String::from("foo"))),
-                    vec![
-                        Node::MatchArm(
-                            Box::new(
-                                Node::Identifier(String::from("bar")),
-                            ),
-                            Box::new(
-                                Node::Program(
-                                    vec![
-                                        Node::Call(
-                                            Box::new(Node::Identifier(String::from("bar"))),
-                                            vec![],
-                                        )
-                                    ]
-                                )
-                            )
-                        ),
-                        Node::MatchArm(
-                            Box::new(
-                                Node::Identifier(String::from("baz")),
-                            ),
-                            Box::new(
-                                Node::Program(
-                                    vec![
-                                        Node::Call(
-                                            Box::new(Node::Identifier(String::from("baz"))),
-                                            vec![],
-                                        )
-                                    ]
-                                )
-                            )
-                        )
-                    ],
+            Some(Node::Program(vec![Node::Match(
+                Box::new(Node::Identifier(String::from("foo"))),
+                vec![
+                    Node::MatchArm(
+                        Box::new(Node::Identifier(String::from("bar")),),
+                        Box::new(Node::Program(vec![Node::Call(Box::new(Node::Identifier(String::from("bar"))), vec![],)]))
+                    ),
+                    Node::MatchArm(
+                        Box::new(Node::Identifier(String::from("baz")),),
+                        Box::new(Node::Program(vec![Node::Call(Box::new(Node::Identifier(String::from("baz"))), vec![],)]))
+                    )
+                ],
             )])),
         );
     }
