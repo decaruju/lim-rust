@@ -1,0 +1,12 @@
+[package]
+name = "parser"
+version = "0.1.0"
+authors = ["decaruju <julien.decarufel@gmail.com>"]
+edition = "2018"
+
+[lib]
+name = "parser"
+path = "mod.rs"
+
+[dependencies]
+lexer = { path = "../lexer" }

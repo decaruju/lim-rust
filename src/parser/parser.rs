@@ -1,5 +1,5 @@
-use crate::lexer::token::Token;
-use crate::parser::node::Node;
+use lexer::token::Token;
+use crate::node::Node;
 
 pub fn parse(mut tokens: Vec<Token>) -> Option<Node> {
     let mut tree = Node::Program(vec![]);

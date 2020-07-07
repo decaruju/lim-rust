@@ -12,3 +12,7 @@ foo = Foo()
 print(foo.field)
 foo.bar()
 print(foo.field)
+foo2 = Foo()
+print(foo2.field)
+
+print(test(10))

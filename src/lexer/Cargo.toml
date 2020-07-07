@@ -1,0 +1,9 @@
+[package]
+name = "lexer"
+version = "0.1.0"
+authors = ["decaruju <julien.decarufel@gmail.com>"]
+edition = "2018"
+
+[lib]
+name = "lexer"
+path = "mod.rs"

@@ -1,12 +1,46 @@
+extern crate libloading;
+
 use std::collections::HashMap;
 
-use super::object::Object;
-use crate::parser::node::Node;
+use object::{Object};
+use parser::node::Node;
 use std::rc::Rc;
 
+fn buildNatives() -> HashMap<String, Rc<Object>> {
+    let mut natives = HashMap::new();
+    natives.insert(
+        String::from("print"),
+        Rc::new(
+            Object::Native(
+                String::from("../std/target/release/libstd.so"),
+                b"println",
+            ),
+        ),
+    );
+
+    natives.insert(
+        String::from("test"),
+        Rc::new(
+            Object::Native(
+                String::from("../std/target/release/libstd.so"),
+                b"test",
+            ),
+        ),
+    );
+
+    natives
+}
+
+fn call_dynamic(lib: &str, symbol: &[u8], args: Vec<Rc<Object>>) -> Rc<Object> {
+    let lib = libloading::Library::new(lib).unwrap();
+    unsafe {
+        let func: libloading::Symbol<unsafe extern fn(Vec<Rc<Object>>) -> Rc<Object>> = lib.get(symbol).unwrap();
+        func(args)
+    }
+}
+
 pub fn interpret(ast: Node, scope: &mut HashMap<String, Rc<Object>>) -> Rc<Object> {
-    let mut natives: HashMap<String, Rc<Object>> = HashMap::new();
-    natives.insert(String::from("print"), Rc::new(Object::Native(String::from("print"))));
+    let mut natives = buildNatives();
     match ast {
         Node::Member(node, string) => get(&interpret(*node, scope), string),
         Node::Program(nodes) => {
@@ -153,17 +187,6 @@ fn multiply(lhs: Rc<Object>, rhs: Rc<Object>) -> Rc<Object> {
     }
 }
 
-fn to_string(obj: &Rc<Object>) -> String {
-    match &**obj {
-        Object::Integer(number) => format!("{}", number),
-        Object::String(string) => format!("{}", string),
-        Object::Float(number) => format!("{}", number),
-        Object::Enum(name, variations) => format!("enum {:?}, variations {:?}", name, variations),
-        Object::None => String::from("None"),
-        Object::Function(_args, _body) => format!("{:?}", obj),
-        _ => format!("{:?}", obj),
-    }
-}
 
 fn get(obj: &Rc<Object>, string: String) -> Rc<Object> {
     match &**obj {
@@ -199,15 +222,10 @@ fn get(obj: &Rc<Object>, string: String) -> Rc<Object> {
     }
 }
 
-fn call(callee: &Object, args: &Vec<Rc<Object>>, instance: &Rc<Object>) -> Rc<Object> {
-    match callee {
-        Object::Native(identifier) => {
-            if identifier == "print" {
-                for arg in args.iter() {
-                    println!("{}", to_string(&arg));
-                }
-            }
-            Rc::new(Object::None)
+fn call(callee: &Rc<Object>, args: &Vec<Rc<Object>>, instance: &Rc<Object>) -> Rc<Object> {
+    match &**callee {
+        Object::Native(lib, symbol) => {
+            call_dynamic(lib, symbol, args.to_vec())
         }
         Object::Class(fields) => {
             fields.get("$prototype").unwrap().to_owned()
@@ -235,7 +253,7 @@ fn call(callee: &Object, args: &Vec<Rc<Object>>, instance: &Rc<Object>) -> Rc<Ob
             rtn
         }
         Object::BoundFunction(instance, function) => {
-            call(function, args, instance)
+            call(&function, args, &instance)
         }
         _ => unimplemented!(),
     }

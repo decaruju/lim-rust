@@ -1,4 +1,4 @@
-use crate::lexer::token::Token;
+use lexer::token::Token;
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum Node {

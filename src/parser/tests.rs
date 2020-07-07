@@ -1,5 +1,5 @@
 #[allow(unused_imports)]
-use crate::lexer;
+use lexer;
 #[allow(unused_imports)]
 use crate::parser;
 

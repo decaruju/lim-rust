@@ -1,0 +1,17 @@
+[package]
+name = "lim-rust"
+version = "0.1.0"
+authors = ["decaruju <julien.decarufel@gmail.com>"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[[bin]]
+name = "lim"
+path = "main.rs"
+
+[dependencies]
+parser = { path = "../parser" }
+lexer = { path = "../lexer" }
+object = { path = "../object" }
+libloading = "0.6.1"
