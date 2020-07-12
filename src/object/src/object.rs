@@ -10,7 +10,7 @@ pub enum Object {
     Float(f64),
     Error(String),
     String(String),
-    Native(String, &'static [u8]),
+    Native(String, String),
     Enum(String, Vec<Node>),
     EnumVariant(String),
     Function(Vec<Node>, Vec<Node>),

@@ -13,17 +13,16 @@ fn buildNatives() -> HashMap<String, Rc<Object>> {
         Rc::new(
             Object::Native(
                 String::from("../std/target/release/libstd.so"),
-                b"println",
+                String::from("println"),
             ),
         ),
     );
-
     natives.insert(
-        String::from("test"),
+        String::from("native"),
         Rc::new(
             Object::Native(
                 String::from("../std/target/release/libstd.so"),
-                b"test",
+                String::from("native"),
             ),
         ),
     );
@@ -31,10 +30,10 @@ fn buildNatives() -> HashMap<String, Rc<Object>> {
     natives
 }
 
-fn call_dynamic(lib: &str, symbol: &[u8], args: Vec<Rc<Object>>) -> Rc<Object> {
+fn call_dynamic(lib: &str, symbol: &str, args: Vec<Rc<Object>>) -> Rc<Object> {
     let lib = libloading::Library::new(lib).unwrap();
     unsafe {
-        let func: libloading::Symbol<unsafe extern fn(Vec<Rc<Object>>) -> Rc<Object>> = lib.get(symbol).unwrap();
+        let func: libloading::Symbol<unsafe extern fn(Vec<Rc<Object>>) -> Rc<Object>> = lib.get(symbol.as_bytes()).unwrap();
         func(args)
     }
 }

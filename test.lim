@@ -1,18 +1,6 @@
-class Foo {
-  field = 1
-  bar = () {
-    self.field = 2
-  }
-  self.bim = () {
-    print("this is a static method")
-  }
-}
-
-foo = Foo()
-print(foo.field)
-foo.bar()
-print(foo.field)
-foo2 = Foo()
-print(foo2.field)
+test = native(
+  "../std/target/release/libstd.so",
+  "test",
+)
 
 print(test(10))

@@ -18,6 +18,23 @@ pub fn test(args: Vec<Rc<Object>>) -> Rc<Object> {
     }
 }
 
+#[no_mangle]
+pub fn native(args: Vec<Rc<Object>>) -> Rc<Object> {
+    let rtn = if let Object::String(lib) = &**args.get(0).unwrap() {
+        if let Object::String(symbol) = &**args.get(1).unwrap() {
+            Object::Native(
+                lib.to_owned(),
+                symbol.to_owned()
+            )
+        } else {
+            Object::Error(String::from("Wrong arguments"))
+        }
+    } else {
+        Object::Error(String::from("Wrong arguments"))
+    };
+    Rc::new(rtn)
+}
+
 fn fib(n: i64) -> i64 {
     if n == 0 {
         1
