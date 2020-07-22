@@ -1,6 +1,1 @@
-test = native(
-  "../std/target/release/libstd.so",
-  "test",
-)
-
-print(test(10))
+2+2

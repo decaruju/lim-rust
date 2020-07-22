@@ -40,13 +40,6 @@ pub enum Node {
 }
 
 impl Node {
-    pub fn is_a(&self, node: Node) -> bool {
-        match self {
-            node => true,
-            _ => false,
-        }
-    }
-
     pub fn start_of(token: Token) -> Option<Node> {
         match token {
             Token::Identifier(string) => {
@@ -68,7 +61,7 @@ impl Node {
 
     pub fn continues(&self, token: &Token) -> Option<bool> {
         match self {
-            Node::Member(node, string) => {
+            Node::Member(_node, _string) => {
                 match token {
                     Token::OpenParenthesis => Some(true),
                     Token::Equal => Some(true),
@@ -92,7 +85,7 @@ impl Node {
                     }
                 }
             }
-            Node::PartialMember(node) => match token {
+            Node::PartialMember(_node) => match token {
                 Token::Identifier(_) => Some(true),
                 _ => panic!("{:?}", token),
             },
@@ -120,7 +113,7 @@ impl Node {
                     _ => panic!("{:?}", token),
                 }
             },
-            Node::UnopenedMatch(node) => match token {
+            Node::UnopenedMatch(_node) => match token {
                 Token::OpenBrace => Some(true),
                 _ => panic!("{:?}", token),
             },
@@ -141,7 +134,7 @@ impl Node {
                     return Some(true);
                 }
                 let last_arm = arms.last();
-                if let Some(Node::PartialMatchArm(matcher, nodes)) = last_arm {
+                if let Some(Node::PartialMatchArm(_matcher, nodes)) = last_arm {
                     if nodes.continues(token).unwrap() {
                         Some(true)
                     } else {
@@ -157,7 +150,7 @@ impl Node {
                     }
                 }
             }
-            Node::PartialMatchArm(matcher, program) => {
+            Node::PartialMatchArm(_matcher, program) => {
                 if let Some(true) = program.continues(token) {
                     Some(true)
                 } else {
@@ -194,7 +187,7 @@ impl Node {
                     }
                 }
             }
-            Node::Call(_lhs, rhs) => Some(false),
+            Node::Call(_lhs, _rhs) => Some(false),
             Node::PartialCall(_lhs, rhs) => match token {
                 Token::Comma => Some(true),
                 Token::CloseParenthesis => Some(true),
@@ -297,7 +290,7 @@ impl Node {
                 }
             }
             Node::PartialFunctionDefinition(args, nodes) => {
-                let mut last_node = nodes.last_mut().unwrap();
+                let last_node = nodes.last_mut().unwrap();
                 if last_node.continues(&token).unwrap() {
                     last_node.append(token);
                 } else {
@@ -371,7 +364,7 @@ impl Node {
                     }
                 }
                 Token::Comma => {
-                    let mut last_arg = args.last_mut().unwrap();
+                    let last_arg = args.last_mut().unwrap();
                     if last_arg.continues(&token).unwrap() {
                         last_arg.append(token)
                     } else {
@@ -384,15 +377,6 @@ impl Node {
                     }
                     args.last_mut().unwrap().append(token);
                 }
-            },
-            Node::Number(_number) => match token {
-                Token::Plus => {
-                    *self = Node::Addition(Box::new(self.clone()), Box::new(Node::Empty));
-                }
-                Token::Times => {
-                    *self = Node::Multiplication(Box::new(self.clone()), Box::new(Node::Empty));
-                }
-                _ => {}
             },
             Node::Assignment(_lhs, rhs) => {
                 rhs.append(token);
@@ -477,7 +461,7 @@ impl Node {
                     unreachable!();
                 }
             }
-            Node::Member(node, string) => {
+            Node::Member(_node, _string) => {
                 match token {
                     Token::OpenParenthesis => {
                         *self = Node::PartialCall(Box::new(self.to_owned()), vec![]);
